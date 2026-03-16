@@ -20,7 +20,7 @@ window.toggleFrameMode = function() { toggleMode(); };
 window.onResourceClick = function(id, type) {
   document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
   switch (type) {
-    case 'media': playResource(id); break;
+    case 'media': loadMedia(id, projectId); break;
     case 'report': viewReport(id); break;
     case 'workflow': break;
   }
