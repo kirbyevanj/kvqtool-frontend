@@ -24,7 +24,7 @@
   </main>
 
   <dialog id="new-project-dialog">
-    <form hx-post="/v1/projects" hx-target="#project-list" hx-swap="innerHTML" hx-on::after-request="this.closest('dialog').close()">
+    <form hx-post="/htmx/projects" hx-target="#project-list" hx-swap="innerHTML" hx-on::after-request="this.closest('dialog').close()">
       <h3>New Project</h3>
       <label>Name <input type="text" name="name" required></label>
       <label>Description <textarea name="description"></textarea></label>
