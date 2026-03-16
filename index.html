@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KVQTool-Web</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+  <header class="top-bar">
+    <h1 class="logo">KVQTool-Web</h1>
+  </header>
+
+  <main class="project-selector">
+    <div class="project-header">
+      <h2>Projects</h2>
+      <button class="btn btn-primary" onclick="document.getElementById('new-project-dialog').showModal()">+ New Project</button>
+    </div>
+
+    <div id="project-list" hx-get="/htmx/projects" hx-trigger="load" hx-indicator="#loading">
+      <div id="loading" class="htmx-indicator">Loading projects...</div>
+    </div>
+  </main>
+
+  <dialog id="new-project-dialog">
+    <form hx-post="/v1/projects" hx-target="#project-list" hx-swap="innerHTML" hx-on::after-request="this.closest('dialog').close()">
+      <h3>New Project</h3>
+      <label>Name <input type="text" name="name" required></label>
+      <label>Description <textarea name="description"></textarea></label>
+      <div class="dialog-actions">
+        <button type="button" onclick="this.closest('dialog').close()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

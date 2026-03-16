@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KVQTool-Web — Workspace</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow@0.0.60/dist/drawflow.min.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/drawflow@0.0.60/dist/drawflow.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.14.8/dist/shaka-player.compiled.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js"></script>
+</head>
+<body>
+  <header class="top-bar">
+    <a href="/" class="logo">KVQTool-Web</a>
+    <span id="project-name" class="project-title"></span>
+    <nav class="toolbar" id="toolbar">
+      <button class="btn" onclick="showPanel('editor')">Workflow</button>
+      <button class="btn" onclick="showPanel('player')">Player</button>
+      <button class="btn" onclick="showPanel('chart')">Charts</button>
+    </nav>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span>Resources</span>
+        <button class="btn btn-sm" id="add-resource-btn">+</button>
+        <div class="dropdown" id="add-dropdown" style="display:none">
+          <button onclick="triggerUpload()">Upload Media</button>
+          <button onclick="showPanel('editor')">New Workflow</button>
+        </div>
+      </div>
+      <div id="folder-tree" hx-indicator="#sidebar-loading">
+        <div id="sidebar-loading" class="htmx-indicator">Loading...</div>
+      </div>
+    </aside>
+
+    <main class="canvas" id="main-canvas">
+      <div id="panel-editor" class="panel" style="display:none">
+        <div id="drawflow-container"></div>
+        <div class="editor-actions">
+          <button class="btn btn-primary" onclick="saveWorkflow()">Save Workflow</button>
+        </div>
+      </div>
+
+      <div id="panel-player" class="panel" style="display:none">
+        <div class="player-container">
+          <video id="shaka-video" controls></video>
+          <canvas id="frame-canvas" style="display:none"></canvas>
+        </div>
+        <div class="player-controls">
+          <button onclick="frameStep(-1)">◀ Prev Frame</button>
+          <span id="frame-counter">Frame: 0</span>
+          <button onclick="frameStep(1)">Next Frame ▶</button>
+          <button id="toggle-framemode" onclick="toggleFrameMode()">Frame Step Mode</button>
+        </div>
+        <div id="metric-overlay" class="metric-hud"></div>
+      </div>
+
+      <div id="panel-chart" class="panel" style="display:none">
+        <div id="echart-container" style="width:100%;height:500px"></div>
+      </div>
+
+      <div id="panel-empty" class="panel">
+        <p>Select a resource from the sidebar or create a new workflow.</p>
+      </div>
+    </main>
+  </div>
+
+  <footer class="status-bar">
+    <div id="job-progress"></div>
+  </footer>
+
+  <input type="file" id="file-upload-input" accept="video/mp4" style="display:none" onchange="handleFileUpload(this)">
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
