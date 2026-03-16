@@ -1,6 +1,6 @@
 import { initDrawflow, saveWorkflow as saveWf } from './drawflow-nodes.js';
-import { initPlayer, destroyPlayer } from './player.js';
-import { initFrameStepper, stepFrame, toggleMode } from './frame-stepper.js';
+import { initPlayer } from './player.js';
+import { stepFrame, toggleMode } from './frame-stepper.js';
 import { renderChart } from './charts.js';
 import { connectJobWS } from './ws-progress.js';
 import { uploadToS3 } from './upload.js';
