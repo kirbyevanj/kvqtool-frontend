@@ -69,9 +69,11 @@ window.toggleSplitView = function() { toggleSplit(); };
 window.addCurrentToPool = function() {
   const video = document.getElementById('shaka-video');
   if (!video.src || !projectId) return;
-  const name = video.src.split('/').pop().split('?')[0] || 'current';
+  let name = decodeURIComponent(video.src.split('/').pop().split('?')[0] || 'current');
+  const dashIdx = name.indexOf('-');
+  if (dashIdx > 30) name = name.substring(dashIdx + 1);
   const rid = video.dataset.resourceId || 'current-' + Date.now();
-  addToPool(rid, decodeURIComponent(name), projectId);
+  addToPool(rid, name, projectId);
 };
 
 window.setLeftVid = function(id) { setLeftVideo(id); };
