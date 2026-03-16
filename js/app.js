@@ -1,30 +1,26 @@
-import { initDrawflow, saveWorkflow as saveWf } from './drawflow-nodes.js';
-import { loadMedia } from './player.js';
-import { initSplitView, addToPool, removeFromPool, toggleSplit, setLeftVideo, setRightVideo, setFrameOffset, destroySplitView } from './split-view.js';
-import { stepFrame, toggleMode } from './frame-stepper.js';
-import { loadReport } from './charts.js';
-import { connectJobWS } from './ws-progress.js';
+import * as vap from './video-analysis-player.js';
 import { uploadToS3 } from './upload.js';
+import { connectJobWS } from './ws-progress.js';
 
 let projectId = null;
+let pendingFiles = [];
 
-window.showPanel = function(name) {
-  document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-  const el = document.getElementById('panel-' + name);
-  if (el) el.style.display = 'block';
-};
-
-window.saveWorkflow = function() { saveWf(projectId); };
-window.frameStep = function(dir) { stepFrame(dir); };
-window.toggleFrameMode = function() { toggleMode(); };
+window.vapTogglePlay = () => vap.togglePlay();
+window.vapSeek = (val) => vap.seek(val);
+window.vapStepFrame = (dir) => vap.stepFrame(dir);
+window.vapToggleFrameMode = () => vap.toggleFrameMode();
+window.vapToggleSplit = () => vap.toggleSplit();
+window.vapToggleFullscreen = () => vap.toggleFullscreen();
+window.vapToggleControls = () => vap.toggleControls();
+window.vapAddCurrentToPool = () => vap.addCurrentToPool();
+window.vapSetLeft = (id) => vap.setLeft(id);
+window.vapSetRight = (id) => vap.setRight(id);
+window.vapRemoveFromPool = (id) => vap.removeFromPool(id);
+window.vapSetOffset = (id, val) => vap.setFrameOffset(id, val);
 
 window.onResourceClick = function(id, type) {
   document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
-  switch (type) {
-    case 'media': loadMedia(id, projectId); document.getElementById('shaka-video').dataset.resourceId = id; break;
-    case 'report': viewReport(id); break;
-    case 'workflow': break;
-  }
+  if (type === 'media') vap.loadMedia(id, projectId);
 };
 
 window.toggleResMenu = function(id) {
@@ -35,9 +31,10 @@ window.toggleResMenu = function(id) {
   if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
 };
 
-window.viewReport = function(id) {
-  document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
-  loadReport(id, projectId);
+window.addToCompare = function(id, name) {
+  vap.addToPool(id, name, projectId);
+  document.getElementById('video-analysis-player').style.display = 'block';
+  document.getElementById('panel-empty').style.display = 'none';
 };
 
 window.deleteResource = async function(id) {
@@ -59,47 +56,41 @@ window.renameResource = async function(id) {
   loadSidebar();
 };
 
-window.openWorkflow = function(id) {
-  document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
-  showPanel('editor');
-};
-
-window.toggleSplitView = function() { toggleSplit(); };
-
-window.addCurrentToPool = function() {
-  const video = document.getElementById('shaka-video');
-  if (!video.src || !projectId) return;
-  let name = decodeURIComponent(video.src.split('/').pop().split('?')[0] || 'current');
-  const dashIdx = name.indexOf('-');
-  if (dashIdx > 30) name = name.substring(dashIdx + 1);
-  const rid = video.dataset.resourceId || 'current-' + Date.now();
-  addToPool(rid, name, projectId);
-};
-
-window.setLeftVid = function(id) { setLeftVideo(id); };
-window.setRightVid = function(id) { setRightVideo(id); };
-window.removeFromPool = function(id) { removeFromPool(id); };
-window.setSplitFrameOffset = function(id, val) { setFrameOffset(id, val); };
-
-window.addToCompare = function(id, name) {
-  addToPool(id, name, projectId);
-  window.showPanel('player');
-  const pool = document.getElementById('comparison-pool');
-  if (pool) pool.style.display = 'block';
-};
+window.showPanel = function() {};
 
 window.triggerUpload = function() {
   document.getElementById('add-dropdown').style.display = 'none';
   document.getElementById('file-upload-input').click();
 };
 
-window.handleFileUpload = async function(input) {
+window.handleFileSelect = function(input) {
   if (!input.files.length || !projectId) return;
-  for (const file of input.files) {
-    await uploadToS3(projectId, file);
-  }
-  loadSidebar();
+  pendingFiles = Array.from(input.files);
+  const list = document.getElementById('upload-file-list');
+  list.innerHTML = pendingFiles.map(f =>
+    `<div class="upload-file-entry">${f.name} <span class="upload-file-size">(${(f.size/1024/1024).toFixed(1)} MB)</span></div>`
+  ).join('');
+  document.getElementById('upload-dialog').showModal();
   input.value = '';
+};
+
+window.vapConfirmUpload = async function() {
+  const repackage = document.getElementById('repackage-fmp4').checked;
+  document.getElementById('upload-dialog').close();
+  const progress = document.getElementById('job-progress');
+
+  for (const file of pendingFiles) {
+    progress.textContent = `Uploading ${file.name}...`;
+    await uploadToS3(projectId, file);
+    if (repackage) {
+      progress.textContent = `Queuing fMP4 repackage for ${file.name}...`;
+      // TODO: POST to repackage endpoint once worker supports it
+    }
+  }
+
+  pendingFiles = [];
+  progress.textContent = 'Upload complete';
+  loadSidebar();
 };
 
 function loadSidebar() {
@@ -110,7 +101,6 @@ function loadSidebar() {
 function init() {
   const params = new URLSearchParams(window.location.search);
   projectId = params.get('project');
-
   if (!projectId) return;
 
   const nameEl = document.getElementById('project-name');
@@ -121,11 +111,7 @@ function init() {
   }
 
   loadSidebar();
-
-  initSplitView(projectId);
-
-  const editorEl = document.getElementById('drawflow-container');
-  if (editorEl) initDrawflow(editorEl);
+  vap.init(projectId);
 
   document.getElementById('add-resource-btn')?.addEventListener('click', () => {
     const dd = document.getElementById('add-dropdown');
@@ -138,5 +124,3 @@ document.addEventListener('click', () => {
 });
 
 document.addEventListener('DOMContentLoaded', init);
-
-export { projectId };

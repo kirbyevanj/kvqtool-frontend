@@ -503,3 +503,199 @@ dialog input:focus, dialog textarea:focus {
   text-align: center;
 }
 .offset-label { color: var(--text-muted); }
+
+/* VideoAnalysisPlayer */
+.vap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #000;
+  position: relative;
+}
+.vap-viewport {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+.vap-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+.vap-video-right {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+  object-fit: contain;
+}
+#vap-video-left { position: relative; z-index: 2; }
+.vap-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 3;
+}
+.vap-divider {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 3px;
+  height: 100%;
+  background: var(--accent);
+  cursor: col-resize;
+  z-index: 5;
+  touch-action: none;
+}
+.vap-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px; height: 32px;
+  background: var(--accent);
+  border-radius: 6px;
+  opacity: 0.9;
+}
+.vap-metric-hud {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  z-index: 6;
+}
+
+/* VAP Controls */
+.vap-controls {
+  background: var(--surface);
+  padding: 8px 14px;
+  border-top: 1px solid var(--border-dim);
+  z-index: 10;
+}
+.vap-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vap-controls-secondary {
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.vap-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.vap-btn:hover { background: var(--surface-hover); color: var(--text); }
+.vap-btn-active { background: var(--accent); color: #0F172A; border-color: var(--accent); }
+.vap-seekbar {
+  flex: 1;
+  height: 4px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.vap-timecode, .vap-frame-counter {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  min-width: 90px;
+}
+.vap-separator {
+  width: 1px;
+  height: 16px;
+  background: var(--border-dim);
+}
+.vap-collapse-btn { margin-left: auto; }
+
+/* VAP Pool */
+.vap-pool {
+  background: var(--surface);
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-dim);
+  z-index: 10;
+}
+.vap-pool-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.vap-pool-selectors {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+.vap-pool-selectors label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.vap-pool-selectors select {
+  padding: 4px 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+.vap-offsets { margin-top: 8px; }
+.vap-offsets summary { font-size: 12px; color: var(--text-muted); cursor: pointer; }
+
+/* Upload dialog */
+.upload-file-entry {
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-dim);
+}
+.upload-file-size { color: var(--text-muted); font-size: 12px; }
+.upload-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.upload-option input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px; height: 16px;
+}
+
+/* Fullscreen overrides */
+.vap:fullscreen { background: #000; }
+.vap:fullscreen .vap-controls {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  opacity: 0;
+  transition: opacity 300ms;
+}
+.vap:fullscreen:hover .vap-controls { opacity: 1; }
+.vap:fullscreen .vap-pool {
+  position: absolute;
+  bottom: 80px; right: 0;
+  width: 350px;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
