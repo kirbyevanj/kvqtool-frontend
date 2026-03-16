@@ -45,16 +45,34 @@
 
       <div id="panel-player" class="panel" style="display:none">
         <div class="player-container">
+          <video id="compare-video" style="display:none"></video>
           <video id="shaka-video" controls></video>
+          <div id="split-divider" style="display:none"></div>
           <canvas id="frame-canvas" style="display:none"></canvas>
+          <div id="metric-overlay" class="metric-hud"></div>
         </div>
         <div class="player-controls">
-          <button onclick="frameStep(-1)">◀ Prev Frame</button>
+          <button onclick="frameStep(-1)">Prev Frame</button>
           <span id="frame-counter">Frame: 0</span>
-          <button onclick="frameStep(1)">Next Frame ▶</button>
+          <button onclick="frameStep(1)">Next Frame</button>
           <button id="toggle-framemode" onclick="toggleFrameMode()">Frame Step Mode</button>
+          <button id="toggle-split-btn" onclick="toggleSplitView()">Split View</button>
         </div>
-        <div id="metric-overlay" class="metric-hud"></div>
+        <div id="comparison-pool" style="display:none">
+          <div class="pool-header">
+            <span>Comparison Pool</span>
+            <button class="btn btn-sm" onclick="addCurrentToPool()">+ Add Current</button>
+          </div>
+          <div id="pool-items"></div>
+          <div class="pool-selectors">
+            <label>Left <select id="left-select" onchange="window.setLeftVid(this.value)"></select></label>
+            <label>Right <select id="right-select" onchange="window.setRightVid(this.value)"></select></label>
+          </div>
+          <details class="advanced-offsets">
+            <summary>Frame Offsets</summary>
+            <div id="offset-controls"></div>
+          </details>
+        </div>
       </div>
 
       <div id="panel-chart" class="panel" style="display:none">

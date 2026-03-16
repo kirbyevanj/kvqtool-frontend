@@ -1,5 +1,6 @@
 import { initDrawflow, saveWorkflow as saveWf } from './drawflow-nodes.js';
 import { loadMedia } from './player.js';
+import { initSplitView, addToPool, removeFromPool, toggleSplit, setLeftVideo, setRightVideo, setFrameOffset, destroySplitView } from './split-view.js';
 import { stepFrame, toggleMode } from './frame-stepper.js';
 import { loadReport } from './charts.js';
 import { connectJobWS } from './ws-progress.js';
@@ -20,7 +21,7 @@ window.toggleFrameMode = function() { toggleMode(); };
 window.onResourceClick = function(id, type) {
   document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
   switch (type) {
-    case 'media': loadMedia(id, projectId); break;
+    case 'media': loadMedia(id, projectId); document.getElementById('shaka-video').dataset.resourceId = id; break;
     case 'report': viewReport(id); break;
     case 'workflow': break;
   }
@@ -63,6 +64,28 @@ window.openWorkflow = function(id) {
   showPanel('editor');
 };
 
+window.toggleSplitView = function() { toggleSplit(); };
+
+window.addCurrentToPool = function() {
+  const video = document.getElementById('shaka-video');
+  if (!video.src || !projectId) return;
+  const name = video.src.split('/').pop().split('?')[0] || 'current';
+  const rid = video.dataset.resourceId || 'current-' + Date.now();
+  addToPool(rid, decodeURIComponent(name), projectId);
+};
+
+window.setLeftVid = function(id) { setLeftVideo(id); };
+window.setRightVid = function(id) { setRightVideo(id); };
+window.removeFromPool = function(id) { removeFromPool(id); };
+window.setSplitFrameOffset = function(id, val) { setFrameOffset(id, val); };
+
+window.addToCompare = function(id, name) {
+  addToPool(id, name, projectId);
+  window.showPanel('player');
+  const pool = document.getElementById('comparison-pool');
+  if (pool) pool.style.display = 'block';
+};
+
 window.triggerUpload = function() {
   document.getElementById('add-dropdown').style.display = 'none';
   document.getElementById('file-upload-input').click();
@@ -96,6 +119,8 @@ function init() {
   }
 
   loadSidebar();
+
+  initSplitView(projectId);
 
   const editorEl = document.getElementById('drawflow-container');
   if (editorEl) initDrawflow(editorEl);

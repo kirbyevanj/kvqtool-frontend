@@ -1,3 +1,5 @@
+import { isSplitActive, getSplitPosition, getRightVideo, getFrameOffset, drawSplitFrame } from './split-view.js';
+
 let frameMode = false;
 let currentFrame = 0;
 let fps = 30;
@@ -33,15 +35,40 @@ export function stepFrame(direction) {
 
   document.getElementById('frame-counter').textContent = `Frame: ${currentFrame}`;
 
+  if (isSplitActive()) {
+    const rightVideo = getRightVideo();
+    if (rightVideo && rightVideo.src) {
+      const offset = getFrameOffset(rightVideo.dataset?.resourceId) || 0;
+      rightVideo.currentTime = Math.max(0, video.currentTime + offset / fps);
+    }
+  }
+
   if (frameMode) {
     const canvas = document.getElementById('frame-canvas');
-    video.onseeked = () => drawCurrentFrame(video, canvas);
+    const onSeeked = () => {
+      if (isSplitActive()) {
+        const rv = getRightVideo();
+        if (rv && rv.src) {
+          rv.onseeked = () => drawCurrentFrame(video, canvas);
+          return;
+        }
+      }
+      drawCurrentFrame(video, canvas);
+    };
+    video.onseeked = onSeeked;
   }
 
   updateMetricOverlay(currentFrame);
 }
 
 function drawCurrentFrame(video, canvas) {
+  if (isSplitActive()) {
+    const rightVideo = getRightVideo();
+    if (rightVideo && rightVideo.src) {
+      drawSplitFrame(canvas, video, rightVideo, getSplitPosition());
+      return;
+    }
+  }
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 }
