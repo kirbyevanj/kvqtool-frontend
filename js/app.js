@@ -34,11 +34,6 @@ window.toggleResMenu = function(id) {
   if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
 };
 
-window.playResource = function(id) {
-  document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
-  loadMedia(id, projectId);
-};
-
 window.viewReport = function(id) {
   document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
   loadReport(id, projectId);
