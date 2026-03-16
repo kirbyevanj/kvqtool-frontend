@@ -1,3 +1,5 @@
+import { createBackend } from './media-backend.js';
+
 let fps = 30;
 let currentFrame = 0;
 let frameMode = false;
@@ -10,6 +12,8 @@ let frameOffsets = {};
 let controlsVisible = true;
 let currentProjectId = null;
 let currentResourceId = null;
+let leftBackend = null;
+let rightBackend = null;
 
 export function init(projectId) {
   currentProjectId = projectId;
@@ -24,10 +28,11 @@ export async function loadMedia(resourceId, projectId) {
   const data = await resp.json();
 
   currentResourceId = resourceId;
-  const video = leftVideo();
+  const video = leftVideoEl();
 
-  video.src = data.download_url;
-  video.load();
+  if (leftBackend) leftBackend.destroy();
+  leftBackend = createBackend(data.download_url, video);
+  leftBackend.load(data.download_url);
 
   video.dataset.resourceId = resourceId;
   document.getElementById('video-analysis-player').style.display = 'block';
@@ -36,35 +41,34 @@ export async function loadMedia(resourceId, projectId) {
   video.removeEventListener('timeupdate', updateTimecode);
   video.addEventListener('timeupdate', updateTimecode);
   video.addEventListener('loadedmetadata', () => {
-    if (video.duration) {
-      document.getElementById('vap-seekbar').max = Math.floor(video.duration * 1000);
-    }
-    if (video.videoWidth && video.videoHeight) {
-      fps = detectFPS(video) || 30;
-    }
+    const dur = leftBackend.getDuration();
+    if (dur) document.getElementById('vap-seekbar').max = Math.floor(dur * 1000);
   }, { once: true });
 }
 
 export function togglePlay() {
-  const v = leftVideo();
-  if (v.paused) { v.play(); syncRight('play'); }
-  else { v.pause(); syncRight('pause'); }
+  const b = leftBackend;
+  if (!b) return;
+  const v = b.getVideoElement();
+  if (v.paused) { b.play(); syncRight('play'); }
+  else { b.pause(); syncRight('pause'); }
   document.getElementById('vap-play-btn').textContent = v.paused ? 'Play' : 'Pause';
 }
 
 export function seek(val) {
-  const v = leftVideo();
-  if (!v.duration) return;
-  v.currentTime = (val / 1000);
+  if (!leftBackend) return;
+  leftBackend.seek(val / 1000);
   syncRight('seek');
   updateFrame();
 }
 
 export function stepFrame(dir) {
-  const v = leftVideo();
-  if (!v.duration) return;
-  v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + dir / fps));
-  currentFrame = Math.round(v.currentTime * fps);
+  if (!leftBackend) return;
+  const t = leftBackend.getCurrentTime();
+  const dur = leftBackend.getDuration();
+  if (!dur) return;
+  leftBackend.seek(Math.max(0, Math.min(dur, t + dir / fps)));
+  currentFrame = Math.round(leftBackend.getCurrentTime() * fps);
   document.getElementById('vap-frame-counter').textContent = `Frame: ${currentFrame}`;
   syncRight('seek');
   if (frameMode) renderFrameToCanvas();
@@ -73,12 +77,13 @@ export function stepFrame(dir) {
 
 export function toggleFrameMode() {
   frameMode = !frameMode;
-  const v = leftVideo();
+  if (!leftBackend) return;
+  const v = leftBackend.getVideoElement();
   const canvas = document.getElementById('vap-canvas');
   const btn = document.getElementById('vap-framestep-btn');
 
   if (frameMode) {
-    v.pause();
+    leftBackend.pause();
     syncRight('pause');
     canvas.style.display = 'block';
     canvas.width = v.videoWidth || 1920;
@@ -94,9 +99,9 @@ export function toggleFrameMode() {
 export function toggleSplit() {
   splitActive = !splitActive;
   const pool = document.getElementById('vap-pool');
-  const compare = rightVideo();
+  const compare = rightVideoEl();
   const divider = document.getElementById('vap-divider');
-  const primary = leftVideo();
+  const primary = leftVideoEl();
   const btn = document.getElementById('vap-split-btn');
 
   if (splitActive) {
@@ -123,10 +128,11 @@ export function toggleFullscreen() {
 
 export function toggleControls() {
   controlsVisible = !controlsVisible;
-  const controls = document.getElementById('vap-controls');
-  const pool = document.getElementById('vap-pool');
-  controls.style.display = controlsVisible ? 'block' : 'none';
-  if (!controlsVisible && pool) pool.style.display = 'none';
+  document.getElementById('vap-controls').style.display = controlsVisible ? 'block' : 'none';
+  if (!controlsVisible) {
+    const pool = document.getElementById('vap-pool');
+    if (pool) pool.style.display = 'none';
+  }
 }
 
 export async function addToPool(resourceId, name, projectId) {
@@ -150,9 +156,10 @@ export function setLeft(resourceId) {
   const entry = comparisonPool.find(v => v.resourceId === resourceId);
   if (!entry) return;
   leftVideoId = resourceId;
-  const v = leftVideo();
-  v.src = entry.url;
-  v.load();
+  const v = leftVideoEl();
+  if (leftBackend) leftBackend.destroy();
+  leftBackend = createBackend(entry.url, v);
+  leftBackend.load(entry.url);
   v.dataset.resourceId = resourceId;
 }
 
@@ -160,9 +167,10 @@ export function setRight(resourceId) {
   const entry = comparisonPool.find(v => v.resourceId === resourceId);
   if (!entry) return;
   rightVideoId = resourceId;
-  const v = rightVideo();
-  v.src = entry.url;
-  v.load();
+  const v = rightVideoEl();
+  if (rightBackend) rightBackend.destroy();
+  rightBackend = createBackend(entry.url, v);
+  rightBackend.load(entry.url);
 }
 
 export function setFrameOffset(resourceId, offset) {
@@ -170,8 +178,9 @@ export function setFrameOffset(resourceId, offset) {
 }
 
 export function addCurrentToPool() {
-  const v = leftVideo();
-  if (!v.src || !currentProjectId) return;
+  if (!leftBackend || !currentProjectId) return;
+  const v = leftBackend.getVideoElement();
+  if (!v.src) return;
   let name = decodeURIComponent(v.src.split('/').pop().split('?')[0] || 'current');
   const d = name.indexOf('-');
   if (d > 30) name = name.substring(d + 1);
@@ -181,34 +190,28 @@ export function addCurrentToPool() {
 
 export function isSplitActive() { return splitActive; }
 
-function detectFPS(video) {
-  return null;
-}
-
-function leftVideo() { return document.getElementById('vap-video-left'); }
-function rightVideo() { return document.getElementById('vap-video-right'); }
+function leftVideoEl() { return document.getElementById('vap-video-left'); }
+function rightVideoEl() { return document.getElementById('vap-video-right'); }
 
 function syncRight(action) {
-  if (!splitActive) return;
-  const r = rightVideo();
-  if (!r.src) return;
+  if (!splitActive || !rightBackend) return;
   const offset = (frameOffsets[rightVideoId] || 0) / fps;
   switch (action) {
-    case 'play': r.play(); break;
-    case 'pause': r.pause(); break;
-    case 'seek': r.currentTime = Math.max(0, leftVideo().currentTime + offset); break;
+    case 'play': rightBackend.play(); break;
+    case 'pause': rightBackend.pause(); break;
+    case 'seek': rightBackend.seek(Math.max(0, leftBackend.getCurrentTime() + offset)); break;
   }
 }
 
 function updateFrame() {
-  const v = leftVideo();
-  currentFrame = Math.round(v.currentTime * fps);
+  if (!leftBackend) return;
+  currentFrame = Math.round(leftBackend.getCurrentTime() * fps);
   document.getElementById('vap-frame-counter').textContent = `Frame: ${currentFrame}`;
 }
 
 function updateTimecode() {
-  const v = leftVideo();
-  const t = v.currentTime || 0;
+  if (!leftBackend) return;
+  const t = leftBackend.getCurrentTime();
   const h = Math.floor(t / 3600);
   const m = Math.floor((t % 3600) / 60);
   const s = Math.floor(t % 60);
@@ -222,20 +225,18 @@ function updateTimecode() {
 function renderFrameToCanvas() {
   const canvas = document.getElementById('vap-canvas');
   const ctx = canvas.getContext('2d');
-  const v = leftVideo();
+  const v = leftBackend.getVideoElement();
 
-  if (splitActive) {
-    const r = rightVideo();
-    if (r && r.src) {
-      const w = canvas.width, h = canvas.height;
-      const sx = Math.round(w * splitPosition);
-      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, sx, h); ctx.clip();
-      ctx.drawImage(v, 0, 0, w, h); ctx.restore();
-      ctx.save(); ctx.beginPath(); ctx.rect(sx, 0, w - sx, h); ctx.clip();
-      ctx.drawImage(r, 0, 0, w, h); ctx.restore();
-      ctx.fillStyle = '#22C55E'; ctx.fillRect(sx - 1, 0, 3, h);
-      return;
-    }
+  if (splitActive && rightBackend) {
+    const r = rightBackend.getVideoElement();
+    const w = canvas.width, h = canvas.height;
+    const sx = Math.round(w * splitPosition);
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, sx, h); ctx.clip();
+    ctx.drawImage(v, 0, 0, w, h); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.rect(sx, 0, w - sx, h); ctx.clip();
+    ctx.drawImage(r, 0, 0, w, h); ctx.restore();
+    ctx.fillStyle = '#22C55E'; ctx.fillRect(sx - 1, 0, 3, h);
+    return;
   }
   ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
 }
@@ -247,7 +248,7 @@ function attachDragListeners(divider) {
     const onMove = (ev) => {
       const rect = container.getBoundingClientRect();
       splitPosition = Math.max(0.05, Math.min(0.95, (ev.clientX - rect.left) / rect.width));
-      leftVideo().style.clipPath = `inset(0 ${(1 - splitPosition) * 100}% 0 0)`;
+      leftVideoEl().style.clipPath = `inset(0 ${(1 - splitPosition) * 100}% 0 0)`;
       divider.style.left = `${splitPosition * 100}%`;
     };
     const onUp = () => {
