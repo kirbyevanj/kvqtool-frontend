@@ -10,7 +10,6 @@ let frameOffsets = {};
 let controlsVisible = true;
 let currentProjectId = null;
 let currentResourceId = null;
-let dashPlayer = null;
 
 export function init(projectId) {
   currentProjectId = projectId;
@@ -27,27 +26,23 @@ export async function loadMedia(resourceId, projectId) {
   currentResourceId = resourceId;
   const video = leftVideo();
 
-  destroyDash();
-
-  const url = data.download_url;
-  if (isDashManifest(url)) {
-    dashPlayer = dashjs.MediaPlayer().create();
-    dashPlayer.initialize(video, url, false);
-  } else {
-    video.src = url;
-    video.load();
-  }
+  video.src = data.download_url;
+  video.load();
 
   video.dataset.resourceId = resourceId;
   document.getElementById('video-analysis-player').style.display = 'block';
   document.getElementById('panel-empty').style.display = 'none';
 
+  video.removeEventListener('timeupdate', updateTimecode);
   video.addEventListener('timeupdate', updateTimecode);
   video.addEventListener('loadedmetadata', () => {
     if (video.duration) {
       document.getElementById('vap-seekbar').max = Math.floor(video.duration * 1000);
     }
-  });
+    if (video.videoWidth && video.videoHeight) {
+      fps = detectFPS(video) || 30;
+    }
+  }, { once: true });
 }
 
 export function togglePlay() {
@@ -156,14 +151,8 @@ export function setLeft(resourceId) {
   if (!entry) return;
   leftVideoId = resourceId;
   const v = leftVideo();
-  destroyDash();
-  if (isDashManifest(entry.url)) {
-    dashPlayer = dashjs.MediaPlayer().create();
-    dashPlayer.initialize(v, entry.url, false);
-  } else {
-    v.src = entry.url;
-    v.load();
-  }
+  v.src = entry.url;
+  v.load();
   v.dataset.resourceId = resourceId;
 }
 
@@ -192,13 +181,8 @@ export function addCurrentToPool() {
 
 export function isSplitActive() { return splitActive; }
 
-function destroyDash() {
-  if (dashPlayer) { dashPlayer.reset(); dashPlayer = null; }
-}
-
-function isDashManifest(url) {
-  const path = url.split('?')[0].toLowerCase();
-  return path.endsWith('.mpd') || path.endsWith('.m3u8');
+function detectFPS(video) {
+  return null;
 }
 
 function leftVideo() { return document.getElementById('vap-video-left'); }
