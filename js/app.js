@@ -24,7 +24,9 @@ window.triggerUpload = function() {
 
 window.handleFileUpload = async function(input) {
   if (!input.files.length || !projectId) return;
-  await uploadToS3(projectId, input.files[0]);
+  for (const file of input.files) {
+    await uploadToS3(projectId, file);
+  }
   loadSidebar();
   input.value = '';
 };
