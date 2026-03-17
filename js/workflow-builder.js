@@ -199,11 +199,25 @@ export function importDAG(dagJson) {
     for (const [id, node] of Object.entries(nodes)) {
       const tmpl = nodeTemplates[node.type];
       if (!tmpl) continue;
+      const params = node.params || {};
       const nodeId = editor.addNode(
         node.type, tmpl.inputs, tmpl.outputs,
-        x, y, node.type.toLowerCase(), node.params || {}, tmpl.html
+        x, y, node.type.toLowerCase(), params, tmpl.html
       );
       posMap[id] = nodeId;
+
+      // Populate df-* input elements from saved params
+      const nodeEl = document.querySelector(`#node-${nodeId}`);
+      if (nodeEl) {
+        for (const [key, val] of Object.entries(params)) {
+          const input = nodeEl.querySelector(`[df-${key}]`);
+          if (input && val !== undefined && val !== null) {
+            input.value = val;
+            editor.drawflow.drawflow.Home.data[nodeId].data[key] = val;
+          }
+        }
+      }
+
       x += 280;
       if (x > 800) { x = 80; y += 220; }
     }
