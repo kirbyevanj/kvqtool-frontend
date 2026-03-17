@@ -39,6 +39,7 @@ window.onResourceClick = function(id, type) {
   } else {
     vap.setCurrentName(label);
     vap.loadMedia(id, projectId);
+    showView("player");
   }
 };
 
@@ -50,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
       vap.loadMedia(pendingSwitchId, projectId);
       pendingSwitchId = null;
       pendingSwitchName = null;
+      showView("player");
     }
   });
 });

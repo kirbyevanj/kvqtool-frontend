@@ -59,8 +59,8 @@ export async function loadMedia(resourceId, projectId) {
   leftBackend.load(data.download_url);
 
   video.dataset.resourceId = resourceId;
-  document.getElementById('video-analysis-player').style.display = 'block';
-  document.getElementById('panel-empty').style.display = 'none';
+  
+  
 
   video.removeEventListener('timeupdate', updateTimecode);
   video.addEventListener('timeupdate', updateTimecode);
