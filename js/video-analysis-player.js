@@ -515,11 +515,11 @@ function attachDragListeners(divider) {
       splitPosition = Math.max(0.05, Math.min(0.95, (ev.clientX - rect.left) / rect.width));
       rightVideoEl().style.clipPath = `inset(0 0 0 ${splitPosition * 100}%)`;
       divider.style.left = `${splitPosition * 100}%`;
-      if (frameMode) renderFrameToCanvas();
     };
     const onUp = () => {
       divider.removeEventListener('pointermove', onMove);
       divider.removeEventListener('pointerup', onUp);
+      if (frameMode) renderFrameToCanvas();
     };
     divider.addEventListener('pointermove', onMove);
     divider.addEventListener('pointerup', onUp);
