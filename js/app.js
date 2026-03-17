@@ -74,6 +74,28 @@ window.deleteResource = async function(id) {
   if (!confirm('Delete this resource?')) return;
   await fetch(`/v1/projects/${projectId}/resources/${id}`, { method: 'DELETE' });
   loadSidebar();
+
+  const resizeHandle = document.getElementById('vap-resize');
+  if (resizeHandle) {
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      resizeHandle.setPointerCapture(e.pointerId);
+      const playerEl = document.getElementById('video-analysis-player');
+      const startY = e.clientY;
+      const startH = playerEl.offsetHeight;
+      const onMove = (ev) => {
+        const newH = Math.max(150, startH + (ev.clientY - startY));
+        playerEl.style.height = newH + 'px';
+        playerEl.style.flex = 'none';
+      };
+      const onUp = () => {
+        resizeHandle.removeEventListener('pointermove', onMove);
+        resizeHandle.removeEventListener('pointerup', onUp);
+      };
+      resizeHandle.addEventListener('pointermove', onMove);
+      resizeHandle.addEventListener('pointerup', onUp);
+    });
+  }
 };
 
 window.renameResource = async function(id) {
@@ -86,6 +108,28 @@ window.renameResource = async function(id) {
     body: JSON.stringify({ name }),
   });
   loadSidebar();
+
+  const resizeHandle = document.getElementById('vap-resize');
+  if (resizeHandle) {
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      resizeHandle.setPointerCapture(e.pointerId);
+      const playerEl = document.getElementById('video-analysis-player');
+      const startY = e.clientY;
+      const startH = playerEl.offsetHeight;
+      const onMove = (ev) => {
+        const newH = Math.max(150, startH + (ev.clientY - startY));
+        playerEl.style.height = newH + 'px';
+        playerEl.style.flex = 'none';
+      };
+      const onUp = () => {
+        resizeHandle.removeEventListener('pointermove', onMove);
+        resizeHandle.removeEventListener('pointerup', onUp);
+      };
+      resizeHandle.addEventListener('pointermove', onMove);
+      resizeHandle.addEventListener('pointerup', onUp);
+    });
+  }
 };
 
 window.showPanel = function() {};
@@ -99,11 +143,16 @@ function showView(view) {
   player.style.display = 'none';
   workflow.style.display = 'none';
   empty.style.display = 'none';
+  document.getElementById('vap-resize').style.display = 'none';
 
   switch (view) {
     case 'player':
-      if (vap.isPlayerActive()) player.style.display = 'flex';
-      else empty.style.display = 'block';
+      if (vap.isPlayerActive()) {
+        player.style.display = 'flex';
+        document.getElementById('vap-resize').style.display = 'flex';
+      } else {
+        empty.style.display = 'block';
+      }
       break;
     case 'workflow':
       workflow.style.display = 'flex';
@@ -127,6 +176,28 @@ window.deleteWorkflow = async function(id, name) {
     alert('Delete failed: ' + err);
   }
   loadSidebar();
+
+  const resizeHandle = document.getElementById('vap-resize');
+  if (resizeHandle) {
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      resizeHandle.setPointerCapture(e.pointerId);
+      const playerEl = document.getElementById('video-analysis-player');
+      const startY = e.clientY;
+      const startH = playerEl.offsetHeight;
+      const onMove = (ev) => {
+        const newH = Math.max(150, startH + (ev.clientY - startY));
+        playerEl.style.height = newH + 'px';
+        playerEl.style.flex = 'none';
+      };
+      const onUp = () => {
+        resizeHandle.removeEventListener('pointermove', onMove);
+        resizeHandle.removeEventListener('pointerup', onUp);
+      };
+      resizeHandle.addEventListener('pointermove', onMove);
+      resizeHandle.addEventListener('pointerup', onUp);
+    });
+  }
 };
 
 window.editWorkflow = function(id) {
@@ -347,6 +418,28 @@ window.vapConfirmUpload = async function() {
   pendingFiles = [];
   progress.textContent = 'Upload complete';
   loadSidebar();
+
+  const resizeHandle = document.getElementById('vap-resize');
+  if (resizeHandle) {
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      resizeHandle.setPointerCapture(e.pointerId);
+      const playerEl = document.getElementById('video-analysis-player');
+      const startY = e.clientY;
+      const startH = playerEl.offsetHeight;
+      const onMove = (ev) => {
+        const newH = Math.max(150, startH + (ev.clientY - startY));
+        playerEl.style.height = newH + 'px';
+        playerEl.style.flex = 'none';
+      };
+      const onUp = () => {
+        resizeHandle.removeEventListener('pointermove', onMove);
+        resizeHandle.removeEventListener('pointerup', onUp);
+      };
+      resizeHandle.addEventListener('pointermove', onMove);
+      resizeHandle.addEventListener('pointerup', onUp);
+    });
+  }
 };
 
 function loadSidebar() {
@@ -391,6 +484,28 @@ function init() {
       .then(p => { nameEl.textContent = p.name; });
   }
   loadSidebar();
+
+  const resizeHandle = document.getElementById('vap-resize');
+  if (resizeHandle) {
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      resizeHandle.setPointerCapture(e.pointerId);
+      const playerEl = document.getElementById('video-analysis-player');
+      const startY = e.clientY;
+      const startH = playerEl.offsetHeight;
+      const onMove = (ev) => {
+        const newH = Math.max(150, startH + (ev.clientY - startY));
+        playerEl.style.height = newH + 'px';
+        playerEl.style.flex = 'none';
+      };
+      const onUp = () => {
+        resizeHandle.removeEventListener('pointermove', onMove);
+        resizeHandle.removeEventListener('pointerup', onUp);
+      };
+      resizeHandle.addEventListener('pointermove', onMove);
+      resizeHandle.addEventListener('pointerup', onUp);
+    });
+  }
   setInterval(loadSidebar, 60000);
   initPoolDropZone();
   vap.init(projectId);
