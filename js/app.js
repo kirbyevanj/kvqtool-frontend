@@ -97,9 +97,37 @@ window.onNodeDragStart = function(event, nodeType) {
 };
 
 window.deleteWorkflow = async function(id, name) {
+  document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
   if (!confirm('Delete workflow "' + name + '"?')) return;
   await fetch('/v1/projects/' + projectId + '/workflows/' + id, { method: 'DELETE' });
   loadSidebar();
+};
+
+window.editWorkflow = function(id) {
+  document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
+  toggleWorkflowPanel();
+  loadSelectedWorkflow(id);
+};
+
+window.copyWorkflow = async function(id) {
+  document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
+  const resp = await fetch('/v1/projects/' + projectId + '/workflows/' + id);
+  if (!resp.ok) return;
+  const wf = await resp.json();
+  const copyResp = await fetch('/v1/projects/' + projectId + '/workflows', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: wf.name + ' (copy)', dag_json: wf.dag_json }),
+  });
+  if (copyResp.ok) loadSidebar();
+};
+
+window.toggleWfMenu = function(id) {
+  document.querySelectorAll('.res-menu').forEach(m => {
+    if (m.id !== 'wf-menu-' + id) m.style.display = 'none';
+  });
+  const menu = document.getElementById('wf-menu-' + id);
+  if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
 };
 window.refreshSidebar = function() { loadSidebar(); };
 
