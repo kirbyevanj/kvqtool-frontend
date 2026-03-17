@@ -122,13 +122,11 @@ function showView(view) {
   player.style.display = 'none';
   workflow.style.display = 'none';
   empty.style.display = 'none';
-  document.getElementById('vap-resize').style.display = 'none';
 
   switch (view) {
     case 'player':
       if (vap.isPlayerActive()) {
         player.style.display = 'flex';
-        document.getElementById('vap-resize').style.display = 'flex';
       } else {
         empty.style.display = 'block';
       }
