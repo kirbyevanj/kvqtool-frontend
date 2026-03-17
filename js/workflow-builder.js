@@ -257,3 +257,29 @@ export function populateResourceDropdowns(resources) {
     if (current) sel.value = current;
   });
 }
+
+
+export function restoreSelectValues(dagJson) {
+  if (!editor) return;
+  const nodes = dagJson?.nodes || {};
+  const drawflowData = editor.drawflow?.drawflow?.Home?.data || {};
+  for (const [origId, node] of Object.entries(nodes)) {
+    for (const [dfId, dfNode] of Object.entries(drawflowData)) {
+      if (dfNode.name === node.type) {
+        const el = document.querySelector(`#node-${dfId}`);
+        if (!el) continue;
+        const params = node.params || {};
+        let matched = false;
+        for (const [key, val] of Object.entries(params)) {
+          const input = el.querySelector(`[df-${key}]`);
+          if (input && val) {
+            input.value = val;
+            dfNode.data[key] = val;
+            matched = true;
+          }
+        }
+        if (matched) break;
+      }
+    }
+  }
+}

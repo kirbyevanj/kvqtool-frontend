@@ -251,6 +251,7 @@ window.loadSelectedWorkflow = async function(wfId) {
   wfb.setWorkflowId(wf.id);
   if (wf.dag_json) wfb.importDAG(wf.dag_json);
   await refreshResourceDropdowns();
+  if (wf.dag_json) wfb.restoreSelectValues(wf.dag_json);
 };
 
 async function refreshResourceDropdowns() {
