@@ -297,7 +297,12 @@ export function setLeft(resourceId) {
   leftBackend = createBackend(entry.url, v);
   leftBackend.load(entry.url);
   v.dataset.resourceId = resourceId;
-  v.addEventListener('loadeddata', () => leftBackend.seek(currentTime), { once: true });
+  v.addEventListener('loadeddata', () => {
+    leftBackend.seek(currentTime);
+    v.addEventListener('seeked', () => {
+      if (frameMode) renderFrameToCanvas();
+    }, { once: true });
+  }, { once: true });
 }
 
 export function setRight(resourceId) {
@@ -313,6 +318,9 @@ export function setRight(resourceId) {
   const leftTime = leftBackend ? leftBackend.getCurrentTime() : 0;
   v.addEventListener('loadeddata', () => {
     rightBackend.seek(Math.max(0, leftTime + offset));
+    v.addEventListener('seeked', () => {
+      if (frameMode) renderFrameToCanvas();
+    }, { once: true });
   }, { once: true });
   updatePoolUI();
 }
