@@ -186,8 +186,40 @@ export function exportDAG(name, projectId) {
 export function importDAG(dagJson) {
   if (!editor) return;
   try {
-    const drawflowData = dagJson?.drawflow || dagJson;
-    editor.import({ drawflow: drawflowData });
+    if (dagJson?.drawflow) {
+      editor.import(dagJson);
+      return;
+    }
+
+    editor.clear();
+    const nodes = dagJson?.nodes || {};
+    const posMap = {};
+    let x = 80, y = 80;
+
+    for (const [id, node] of Object.entries(nodes)) {
+      const tmpl = nodeTemplates[node.type];
+      if (!tmpl) continue;
+      const nodeId = editor.addNode(
+        node.type, tmpl.inputs, tmpl.outputs,
+        x, y, node.type.toLowerCase(), node.params || {}, tmpl.html
+      );
+      posMap[id] = nodeId;
+      x += 280;
+      if (x > 800) { x = 80; y += 220; }
+    }
+
+    for (const [id, node] of Object.entries(nodes)) {
+      const srcId = posMap[id];
+      if (!srcId) continue;
+      for (const outId of (node.outputs || [])) {
+        const dstId = posMap[outId];
+        if (dstId) {
+          try {
+            editor.addConnection(srcId, dstId, 'output_1', 'input_1');
+          } catch (e) {}
+        }
+      }
+    }
   } catch (e) {
     console.error('Failed to import DAG:', e);
   }
