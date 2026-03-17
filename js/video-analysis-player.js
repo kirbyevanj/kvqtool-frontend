@@ -345,11 +345,12 @@ function syncRight(action) {
     case 'play':
       rv.currentTime = Math.max(0, leftBackend.getCurrentTime() + offset);
       rv.play().catch(() => {});
-      startSyncLoop();
+      startFrameSync();
       break;
     case 'pause':
       rv.pause();
-      stopSyncLoop();
+      rv.playbackRate = 1.0;
+      stopFrameSync();
       break;
     case 'seek':
       rv.currentTime = Math.max(0, leftBackend.getCurrentTime() + offset);
@@ -357,46 +358,61 @@ function syncRight(action) {
   }
 }
 
-function startSyncLoop() {
-  stopSyncLoop();
-  const HARD_SEEK_THRESHOLD = 0.5;
-  const SOFT_DRIFT_THRESHOLD = 0.05;
+function startFrameSync() {
+  stopFrameSync();
+  const lv = leftBackend.getVideoElement();
 
-  const tick = () => {
-    if (!splitActive || !rightBackend || !leftBackend) return;
-    const lv = leftBackend.getVideoElement();
-    const rv = rightBackend.getVideoElement();
-    if (lv.paused) {
-      rv.playbackRate = 1.0;
-      stopSyncLoop();
-      return;
-    }
+  if ('requestVideoFrameCallback' in lv) {
+    const onFrame = (now, metadata) => {
+      if (!splitActive || !rightBackend || !leftBackend) return;
+      if (lv.paused) { rightBackend.getVideoElement().playbackRate = 1.0; return; }
 
-    const offset = (frameOffsets[rightVideoId] || 0) / fps;
-    const target = leftBackend.getCurrentTime() + offset;
-    const drift = rv.currentTime - target;
+      const rv = rightBackend.getVideoElement();
+      const offset = (frameOffsets[rightVideoId] || 0) / fps;
+      const leftTime = metadata.mediaTime;
+      const target = leftTime + offset;
+      const drift = rv.currentTime - target;
 
-    if (Math.abs(drift) > HARD_SEEK_THRESHOLD) {
-      rv.currentTime = target;
-      rv.playbackRate = 1.0;
-    } else if (drift > SOFT_DRIFT_THRESHOLD) {
-      rv.playbackRate = 0.95;
-    } else if (drift < -SOFT_DRIFT_THRESHOLD) {
-      rv.playbackRate = 1.05;
-    } else {
-      rv.playbackRate = 1.0;
-    }
+      if (Math.abs(drift) > 0.5) {
+        rv.currentTime = target;
+        rv.playbackRate = 1.0;
+      } else if (Math.abs(drift) > 0.02) {
+        rv.playbackRate = drift > 0 ? 0.97 : 1.03;
+      } else {
+        rv.playbackRate = 1.0;
+      }
 
+      syncLoopId = lv.requestVideoFrameCallback(onFrame);
+    };
+    syncLoopId = lv.requestVideoFrameCallback(onFrame);
+  } else {
+    const tick = () => {
+      if (!splitActive || !rightBackend || !leftBackend) return;
+      const lv2 = leftBackend.getVideoElement();
+      const rv = rightBackend.getVideoElement();
+      if (lv2.paused) { rv.playbackRate = 1.0; return; }
+
+      const offset = (frameOffsets[rightVideoId] || 0) / fps;
+      const target = leftBackend.getCurrentTime() + offset;
+      const drift = rv.currentTime - target;
+
+      if (Math.abs(drift) > 0.5) {
+        rv.currentTime = target;
+        rv.playbackRate = 1.0;
+      } else if (Math.abs(drift) > 0.02) {
+        rv.playbackRate = drift > 0 ? 0.97 : 1.03;
+      } else {
+        rv.playbackRate = 1.0;
+      }
+
+      syncLoopId = requestAnimationFrame(tick);
+    };
     syncLoopId = requestAnimationFrame(tick);
-  };
-  syncLoopId = requestAnimationFrame(tick);
+  }
 }
 
-function stopSyncLoop() {
-  if (syncLoopId) {
-    cancelAnimationFrame(syncLoopId);
-    syncLoopId = null;
-  }
+function stopFrameSync() {
+  syncLoopId = null;
 }
 
 function updateFrame() {
