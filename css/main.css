@@ -761,3 +761,61 @@ dialog input:focus, dialog textarea:focus {
   transition: background var(--transition);
 }
 .wf-node-menu button:hover { background: var(--surface-hover); }
+
+/* Sidebar sections */
+.sidebar-section {
+  border-bottom: 1px solid var(--border-dim);
+}
+.sidebar-section:last-child { border-bottom: none; }
+
+/* Drawflow node styling - rounded, neutral */
+.drawflow .drawflow-node {
+  border-radius: 10px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+  min-width: 180px;
+}
+.drawflow .drawflow-node.selected {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent-glow) !important;
+}
+.drawflow .drawflow-node .title-box {
+  background: var(--surface2) !important;
+  border-bottom: 1px solid var(--border-dim) !important;
+  border-radius: 10px 10px 0 0 !important;
+  color: var(--text) !important;
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+}
+.drawflow .drawflow-node .input, .drawflow .drawflow-node .output {
+  background: var(--accent) !important;
+  border: 2px solid var(--surface) !important;
+}
+.drawflow .connection .main-path {
+  stroke: var(--text-muted) !important;
+  stroke-width: 2px !important;
+}
+.drawflow .drawflow-delete {
+  background: var(--destructive) !important;
+  color: white !important;
+  border-radius: 50% !important;
+}
+
+/* Resource delete X visible on hover */
+.resource-item .res-delete-btn {
+  display: none;
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.resource-item:hover .res-delete-btn { display: block; }
+.resource-item .res-delete-btn:hover { color: var(--destructive); background: rgba(239,68,68,0.1); }

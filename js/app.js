@@ -90,6 +90,17 @@ window.renameResource = async function(id) {
 };
 
 window.showPanel = function() {};
+
+window.onNodeDragStart = function(event, nodeType) {
+  event.dataTransfer.setData('application/x-kvq-node', nodeType);
+  event.dataTransfer.effectAllowed = 'copy';
+};
+
+window.deleteWorkflow = async function(id, name) {
+  if (!confirm('Delete workflow "' + name + '"?')) return;
+  await fetch('/v1/projects/' + projectId + '/workflows/' + id, { method: 'DELETE' });
+  loadSidebar();
+};
 window.refreshSidebar = function() { loadSidebar(); };
 
 window.onResDragStart = function(event, resourceId, name) {
@@ -111,6 +122,20 @@ window.toggleWorkflowPanel = function() {
       container.addEventListener('contextmenu', showNodeMenu);
       container.addEventListener('click', () => {
         document.getElementById('wf-node-menu').style.display = 'none';
+      });
+      container.addEventListener('dragover', (e) => {
+        if (e.dataTransfer.types.includes('application/x-kvq-node')) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        }
+      });
+      container.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        const nodeType = e.dataTransfer.getData('application/x-kvq-node');
+        if (nodeType) {
+          wfb.addNode(nodeType);
+          await refreshResourceDropdowns();
+        }
       });
       await refreshResourceDropdowns();
     }, 50);
@@ -247,6 +272,7 @@ window.vapConfirmUpload = async function() {
 function loadSidebar() {
   if (!projectId) return;
   htmx.ajax('GET', `/htmx/projects/${projectId}/sidebar`, '#folder-tree');
+  htmx.ajax('GET', `/htmx/projects/${projectId}/workflows-list`, '#workflow-list');
 }
 
 function initPoolDropZone() {

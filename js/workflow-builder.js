@@ -43,6 +43,30 @@ const nodeTemplates = {
     inputs: 1, outputs: 1,
     html: `<div class="wf-node"><p><strong>Generate Report</strong></p></div>`
   },
+  RemoteEncodeX264: {
+    inputs: 0, outputs: 0,
+    html: `<div class="wf-node"><p><strong>Remote x264 Encode</strong></p>
+      <label>Input Resource <select df-resource_id class="wf-select"></select></label>
+      <label>Output Name <input type="text" df-output_name value="encoded.mp4" class="wf-input"></label>
+      <label>CRF <input type="number" df-crf value="23" min="0" max="51" class="wf-input"></label>
+      <label>Bitrate (kbps) <input type="number" df-bitrate_kbps value="" class="wf-input" placeholder="Leave empty for CRF"></label>
+      <label>Preset <select df-preset class="wf-select">
+        <option>ultrafast</option><option>superfast</option><option>veryfast</option>
+        <option>faster</option><option>fast</option><option selected>medium</option>
+        <option>slow</option><option>slower</option><option>veryslow</option><option>placebo</option>
+      </select></label>
+      <label>GOP Length <input type="number" df-gop_length value="250" class="wf-input"></label>
+      <label>Tune <select df-tune class="wf-select">
+        <option value="">None</option><option>film</option><option>animation</option>
+        <option>grain</option><option>stillimage</option><option>psnr</option><option>ssim</option>
+      </select></label>
+      <label>Profile <select df-profile class="wf-select">
+        <option selected>high</option><option>main</option><option>baseline</option>
+      </select></label>
+      <label>Start Time <input type="text" df-start_time value="" class="wf-input" placeholder="e.g. 00:00:05"></label>
+      <label>End Time <input type="text" df-end_time value="" class="wf-input" placeholder="e.g. 00:01:30"></label>
+    </div>`
+  },
   FragmentedMP4Repackage: {
     inputs: 1, outputs: 1,
     html: `<div class="wf-node"><p><strong>fMP4 Repackage</strong></p></div>`
@@ -71,6 +95,31 @@ const nodeDefaults = {
   SplitVideo: { segment_duration: '4' },
   ConcatVideo: {},
   GenerateReport: {},
+  RemoteEncodeX264: {
+    inputs: 0, outputs: 0,
+    html: `<div class="wf-node"><p><strong>Remote x264 Encode</strong></p>
+      <label>Input Resource <select df-resource_id class="wf-select"></select></label>
+      <label>Output Name <input type="text" df-output_name value="encoded.mp4" class="wf-input"></label>
+      <label>CRF <input type="number" df-crf value="23" min="0" max="51" class="wf-input"></label>
+      <label>Bitrate (kbps) <input type="number" df-bitrate_kbps value="" class="wf-input" placeholder="Leave empty for CRF"></label>
+      <label>Preset <select df-preset class="wf-select">
+        <option>ultrafast</option><option>superfast</option><option>veryfast</option>
+        <option>faster</option><option>fast</option><option selected>medium</option>
+        <option>slow</option><option>slower</option><option>veryslow</option><option>placebo</option>
+      </select></label>
+      <label>GOP Length <input type="number" df-gop_length value="250" class="wf-input"></label>
+      <label>Tune <select df-tune class="wf-select">
+        <option value="">None</option><option>film</option><option>animation</option>
+        <option>grain</option><option>stillimage</option><option>psnr</option><option>ssim</option>
+      </select></label>
+      <label>Profile <select df-profile class="wf-select">
+        <option selected>high</option><option>main</option><option>baseline</option>
+      </select></label>
+      <label>Start Time <input type="text" df-start_time value="" class="wf-input" placeholder="e.g. 00:00:05"></label>
+      <label>End Time <input type="text" df-end_time value="" class="wf-input" placeholder="e.g. 00:01:30"></label>
+    </div>`
+  },
+  RemoteEncodeX264: { crf: '23', preset: 'medium', gop_length: '250', profile: 'high', output_name: 'encoded.mp4' },
   FragmentedMP4Repackage: {},
 };
 
