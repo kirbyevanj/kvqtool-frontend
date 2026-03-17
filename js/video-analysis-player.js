@@ -359,19 +359,32 @@ function syncRight(action) {
 
 function startSyncLoop() {
   stopSyncLoop();
-  const drift_threshold = 1 / fps; // one frame tolerance
+  const HARD_SEEK_THRESHOLD = 0.5;
+  const SOFT_DRIFT_THRESHOLD = 0.05;
+
   const tick = () => {
     if (!splitActive || !rightBackend || !leftBackend) return;
     const lv = leftBackend.getVideoElement();
     const rv = rightBackend.getVideoElement();
-    if (lv.paused) { stopSyncLoop(); return; }
+    if (lv.paused) {
+      rv.playbackRate = 1.0;
+      stopSyncLoop();
+      return;
+    }
 
     const offset = (frameOffsets[rightVideoId] || 0) / fps;
     const target = leftBackend.getCurrentTime() + offset;
     const drift = rv.currentTime - target;
 
-    if (Math.abs(drift) > drift_threshold) {
+    if (Math.abs(drift) > HARD_SEEK_THRESHOLD) {
       rv.currentTime = target;
+      rv.playbackRate = 1.0;
+    } else if (drift > SOFT_DRIFT_THRESHOLD) {
+      rv.playbackRate = 0.95;
+    } else if (drift < -SOFT_DRIFT_THRESHOLD) {
+      rv.playbackRate = 1.05;
+    } else {
+      rv.playbackRate = 1.0;
     }
 
     syncLoopId = requestAnimationFrame(tick);
