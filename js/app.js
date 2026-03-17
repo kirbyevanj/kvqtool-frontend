@@ -42,6 +42,7 @@ window.deleteResource = async function(id) {
   if (!confirm('Delete this resource?')) return;
   await fetch(`/v1/projects/${projectId}/resources/${id}`, { method: 'DELETE' });
   loadSidebar();
+  initPoolDropZone();
 };
 
 window.renameResource = async function(id) {
@@ -54,9 +55,15 @@ window.renameResource = async function(id) {
     body: JSON.stringify({ name }),
   });
   loadSidebar();
+  initPoolDropZone();
 };
 
 window.showPanel = function() {};
+
+window.onResDragStart = function(event, resourceId, name) {
+  event.dataTransfer.setData('application/x-kvq-resource', JSON.stringify({ id: resourceId, name: name }));
+  event.dataTransfer.effectAllowed = 'copy';
+};
 
 window.triggerUpload = function() {
   document.getElementById('add-dropdown').style.display = 'none';
@@ -91,6 +98,7 @@ window.vapConfirmUpload = async function() {
   pendingFiles = [];
   progress.textContent = 'Upload complete';
   loadSidebar();
+  initPoolDropZone();
 };
 
 function loadSidebar() {
@@ -111,12 +119,39 @@ function init() {
   }
 
   loadSidebar();
+  initPoolDropZone();
   vap.init(projectId);
 
   document.getElementById('add-resource-btn')?.addEventListener('click', () => {
     const dd = document.getElementById('add-dropdown');
     dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
   });
+}
+
+function initPoolDropZone() {
+  const pool = document.getElementById('vap-pool');
+  const viewport = document.getElementById('video-analysis-player');
+  if (!pool || !viewport) return;
+
+  for (const el of [pool, viewport]) {
+    el.addEventListener('dragover', (e) => {
+      if (e.dataTransfer.types.includes('application/x-kvq-resource')) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        pool.classList.add('vap-pool-dragover');
+      }
+    });
+    el.addEventListener('dragleave', () => { pool.classList.remove('vap-pool-dragover'); });
+    el.addEventListener('drop', (e) => {
+      e.preventDefault();
+      pool.classList.remove('vap-pool-dragover');
+      const raw = e.dataTransfer.getData('application/x-kvq-resource');
+      if (!raw) return;
+      const { id, name } = JSON.parse(raw);
+      vap.addToPool(id, name, projectId);
+      pool.style.display = 'block';
+    });
+  }
 }
 
 document.addEventListener('click', () => {

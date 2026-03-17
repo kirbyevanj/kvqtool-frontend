@@ -705,3 +705,12 @@ dialog input:focus, dialog textarea:focus {
   border-radius: var(--radius);
   box-shadow: 0 8px 24px rgba(0,0,0,0.6);
 }
+
+/* Drag and drop */
+.resource-item[draggable="true"] { cursor: grab; }
+.resource-item[draggable="true"]:active { cursor: grabbing; }
+.vap-pool-dragover {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+  background: var(--accent-glow);
+}
