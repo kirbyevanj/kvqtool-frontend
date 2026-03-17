@@ -109,28 +109,7 @@ window.renameResource = async function(id) {
   });
   loadSidebar();
 
-  const resizeHandle = document.getElementById('vap-resize');
-  if (resizeHandle) {
-    resizeHandle.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      resizeHandle.setPointerCapture(e.pointerId);
-      const playerEl = document.getElementById('video-analysis-player');
-      const startY = e.clientY;
-      const startH = playerEl.offsetHeight;
-      const onMove = (ev) => {
-        const newH = Math.max(150, startH + (ev.clientY - startY));
-        playerEl.style.height = newH + 'px';
-        playerEl.style.flex = 'none';
-      };
-      const onUp = () => {
-        resizeHandle.removeEventListener('pointermove', onMove);
-        resizeHandle.removeEventListener('pointerup', onUp);
-      };
-      resizeHandle.addEventListener('pointermove', onMove);
-      resizeHandle.addEventListener('pointerup', onUp);
-    });
-  }
-};
+  };
 
 window.showPanel = function() {};
 
@@ -177,28 +156,7 @@ window.deleteWorkflow = async function(id, name) {
   }
   loadSidebar();
 
-  const resizeHandle = document.getElementById('vap-resize');
-  if (resizeHandle) {
-    resizeHandle.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      resizeHandle.setPointerCapture(e.pointerId);
-      const playerEl = document.getElementById('video-analysis-player');
-      const startY = e.clientY;
-      const startH = playerEl.offsetHeight;
-      const onMove = (ev) => {
-        const newH = Math.max(150, startH + (ev.clientY - startY));
-        playerEl.style.height = newH + 'px';
-        playerEl.style.flex = 'none';
-      };
-      const onUp = () => {
-        resizeHandle.removeEventListener('pointermove', onMove);
-        resizeHandle.removeEventListener('pointerup', onUp);
-      };
-      resizeHandle.addEventListener('pointermove', onMove);
-      resizeHandle.addEventListener('pointerup', onUp);
-    });
-  }
-};
+  };
 
 window.editWorkflow = function(id) {
   document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
@@ -419,28 +377,7 @@ window.vapConfirmUpload = async function() {
   progress.textContent = 'Upload complete';
   loadSidebar();
 
-  const resizeHandle = document.getElementById('vap-resize');
-  if (resizeHandle) {
-    resizeHandle.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      resizeHandle.setPointerCapture(e.pointerId);
-      const playerEl = document.getElementById('video-analysis-player');
-      const startY = e.clientY;
-      const startH = playerEl.offsetHeight;
-      const onMove = (ev) => {
-        const newH = Math.max(150, startH + (ev.clientY - startY));
-        playerEl.style.height = newH + 'px';
-        playerEl.style.flex = 'none';
-      };
-      const onUp = () => {
-        resizeHandle.removeEventListener('pointermove', onMove);
-        resizeHandle.removeEventListener('pointerup', onUp);
-      };
-      resizeHandle.addEventListener('pointermove', onMove);
-      resizeHandle.addEventListener('pointerup', onUp);
-    });
-  }
-};
+  };
 
 function loadSidebar() {
   if (!projectId) return;
@@ -485,28 +422,7 @@ function init() {
   }
   loadSidebar();
 
-  const resizeHandle = document.getElementById('vap-resize');
-  if (resizeHandle) {
-    resizeHandle.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      resizeHandle.setPointerCapture(e.pointerId);
-      const playerEl = document.getElementById('video-analysis-player');
-      const startY = e.clientY;
-      const startH = playerEl.offsetHeight;
-      const onMove = (ev) => {
-        const newH = Math.max(150, startH + (ev.clientY - startY));
-        playerEl.style.height = newH + 'px';
-        playerEl.style.flex = 'none';
-      };
-      const onUp = () => {
-        resizeHandle.removeEventListener('pointermove', onMove);
-        resizeHandle.removeEventListener('pointerup', onUp);
-      };
-      resizeHandle.addEventListener('pointermove', onMove);
-      resizeHandle.addEventListener('pointerup', onUp);
-    });
-  }
-  setInterval(loadSidebar, 60000);
+    setInterval(loadSidebar, 60000);
   initPoolDropZone();
   vap.init(projectId);
   document.getElementById('add-resource-btn')?.addEventListener('click', () => {
