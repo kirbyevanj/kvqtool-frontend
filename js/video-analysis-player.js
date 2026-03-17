@@ -112,9 +112,13 @@ export function seek(val) {
         rv.play().catch(() => {});
         startFrameSync();
       });
+    } else if (frameMode) {
+      waitForBothSeeked(lv, rv, () => renderFrameToCanvas());
     }
   } else if (wasPlaying) {
     lv.addEventListener('seeked', () => leftBackend.play(), { once: true });
+  } else if (frameMode) {
+    lv.addEventListener('seeked', () => renderFrameToCanvas(), { once: true });
   }
 }
 
