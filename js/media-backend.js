@@ -96,6 +96,8 @@ class MSEBackend {
       return;
     }
 
+    this._evictBuffer(sb);
+
     try {
       sb.appendBuffer(next.buffer);
       if (next.sampleNum) {
@@ -103,7 +105,36 @@ class MSEBackend {
       }
       sb._isLast = next.isLast;
     } catch (e) {
-      console.error('appendBuffer error:', e);
+      if (e.name === 'QuotaExceededError') {
+        this._evictBuffer(sb, true);
+        try {
+          sb.appendBuffer(next.buffer);
+          sb._isLast = next.isLast;
+        } catch (e2) {
+          this._pendingBuffers[id].unshift(next);
+        }
+      } else {
+        console.error('appendBuffer error:', e);
+      }
+    }
+  }
+
+  _evictBuffer(sb, aggressive) {
+    if (sb.updating) return;
+    const currentTime = this._video.currentTime;
+    const behind = aggressive ? 5 : 30;
+    const buffered = sb.buffered;
+    for (let i = 0; i < buffered.length; i++) {
+      const start = buffered.start(i);
+      const end = buffered.end(i);
+      if (end < currentTime - behind) {
+        try { sb.remove(start, end); } catch (e) {}
+        return;
+      }
+      if (start < currentTime - behind) {
+        try { sb.remove(start, currentTime - behind); } catch (e) {}
+        return;
+      }
     }
   }
 
