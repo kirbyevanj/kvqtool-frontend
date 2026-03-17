@@ -95,7 +95,11 @@ export function exportDAG(name, projectId) {
     }
 
     const defaults = nodeDefaults[node.name] || {};
-    const params = { ...defaults, ...node.data, project_id: projectId };
+    const cleanData = {};
+    for (const [k, v] of Object.entries(node.data || {})) {
+      if (v !== '' && v !== undefined && v !== null) cleanData[k] = v;
+    }
+    const params = { ...defaults, ...cleanData, project_id: projectId };
     nodes[String(id)] = {
       id: String(id),
       type: node.name,
