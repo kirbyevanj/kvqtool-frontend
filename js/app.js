@@ -20,7 +20,12 @@ window.vapSetOffset = (id, val) => vap.setFrameOffset(id, val);
 
 window.onResourceClick = function(id, type) {
   document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
-  if (type === 'media') vap.loadMedia(id, projectId);
+  if (type === 'media') {
+    const row = document.querySelector(`.resource-item[data-id="${id}"]`);
+    const label = row?.querySelector('.res-label')?.textContent?.trim() || '';
+    vap.setCurrentName(label);
+    vap.loadMedia(id, projectId);
+  }
 };
 
 window.toggleResMenu = function(id) {

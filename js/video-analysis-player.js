@@ -12,6 +12,7 @@ let frameOffsets = {};
 let controlsVisible = true;
 let currentProjectId = null;
 let currentResourceId = null;
+let currentResourceName = null;
 let leftBackend = null;
 let rightBackend = null;
 
@@ -105,6 +106,7 @@ export function toggleSplit() {
   const btn = document.getElementById('vap-split-btn');
 
   if (splitActive) {
+    ensureCurrentInPool();
     pool.style.display = 'block';
     compare.style.display = 'block';
     divider.style.display = 'block';
@@ -141,7 +143,8 @@ export async function addToPool(resourceId, name, projectId) {
   const resp = await fetch(`/v1/projects/${pid}/resources/${resourceId}/download-url`);
   if (!resp.ok) return;
   const data = await resp.json();
-  comparisonPool.push({ resourceId, name, url: data.download_url });
+  const cleanName = stripUUIDPrefix(name);
+  comparisonPool.push({ resourceId, name: cleanName, url: data.download_url });
   frameOffsets[resourceId] = 0;
   updatePoolUI();
 }
@@ -178,17 +181,31 @@ export function setFrameOffset(resourceId, offset) {
 }
 
 export function addCurrentToPool() {
-  if (!leftBackend || !currentProjectId) return;
+  ensureCurrentInPool();
+}
+
+function ensureCurrentInPool() {
+  if (!leftBackend || !currentProjectId || !currentResourceId) return;
   const v = leftBackend.getVideoElement();
   if (!v.src) return;
-  let name = decodeURIComponent(v.src.split('/').pop().split('?')[0] || 'current');
-  const d = name.indexOf('-');
-  if (d > 30) name = name.substring(d + 1);
-  const rid = v.dataset.resourceId || 'current-' + Date.now();
-  addToPool(rid, name, currentProjectId);
+  const rid = currentResourceId;
+  const name = currentResourceName || stripUUIDPrefix(decodeURIComponent(v.src.split('/').pop().split('?')[0] || 'current'));
+  if (!comparisonPool.find(p => p.resourceId === rid)) {
+    comparisonPool.push({ resourceId: rid, name, url: v.src });
+    frameOffsets[rid] = 0;
+  }
+  leftVideoId = rid;
+  updatePoolUI();
 }
 
 export function isSplitActive() { return splitActive; }
+export function setCurrentName(name) { currentResourceName = stripUUIDPrefix(name); }
+
+function stripUUIDPrefix(name) {
+  const d = name.indexOf('-');
+  if (d > 30) return name.substring(d + 1);
+  return name;
+}
 
 function leftVideoEl() { return document.getElementById('vap-video-left'); }
 function rightVideoEl() { return document.getElementById('vap-video-right'); }
