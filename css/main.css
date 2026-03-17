@@ -605,13 +605,7 @@ dialog input:focus, dialog textarea:focus {
   transition: opacity 300ms;
 }
 .vap:fullscreen:hover .vap-controls { opacity: 1; }
-.vap:fullscreen .vap-pool {
-  position: absolute;
-  bottom: 80px; right: 0;
-  width: 350px;
-  border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-}
+.vap:fullscreen .vap-pool { display: none !important; }
 
 /* Drag and drop */
 .resource-item[draggable="true"] { cursor: grab; }
@@ -650,14 +644,7 @@ dialog input:focus, dialog textarea:focus {
   position: absolute;
   z-index: 20;
 }
-.vap:fullscreen .vap-pool {
-  position: absolute;
-  bottom: 90px; right: 0;
-  width: 350px;
-  border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-  z-index: 20;
-}
+.vap:fullscreen .vap-pool { display: none !important; }
 
 /* Viewport click for play/pause */
 .vap-viewport { cursor: pointer; }
