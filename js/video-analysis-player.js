@@ -80,8 +80,14 @@ export function togglePlay() {
   if (!leftBackend) return;
   const v = leftBackend.getVideoElement();
   const t = leftBackend.getCurrentTime();
-  if (v.paused) { leftBackend.play(); syncRight('play', t); }
-  else { leftBackend.pause(); syncRight('pause', t); }
+  if (v.paused) {
+    if (frameMode) toggleFrameMode();
+    leftBackend.play();
+    syncRight('play', t);
+  } else {
+    leftBackend.pause();
+    syncRight('pause', t);
+  }
   document.getElementById('vap-play-btn').textContent = v.paused ? 'Play' : 'Pause';
 }
 
