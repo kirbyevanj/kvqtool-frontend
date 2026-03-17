@@ -386,6 +386,29 @@ function initPoolDropZone() {
   }
 }
 
+function initResizeHandle() {
+  const handle = document.getElementById('vap-resize');
+  if (!handle) return;
+  handle.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
+    const viewport = document.querySelector('.vap-viewport');
+    const startY = e.clientY;
+    const startH = viewport.offsetHeight;
+    const onMove = (ev) => {
+      const h = Math.max(100, startH + (ev.clientY - startY));
+      viewport.style.height = h + 'px';
+      viewport.style.flex = 'none';
+    };
+    const onUp = () => {
+      handle.removeEventListener('pointermove', onMove);
+      handle.removeEventListener('pointerup', onUp);
+    };
+    handle.addEventListener('pointermove', onMove);
+    handle.addEventListener('pointerup', onUp);
+  });
+}
+
 function init() {
   const params = new URLSearchParams(window.location.search);
   projectId = params.get('project');
@@ -401,6 +424,7 @@ function init() {
     setInterval(loadSidebar, 60000);
   initPoolDropZone();
   vap.init(projectId);
+  initResizeHandle();
   document.getElementById('add-resource-btn')?.addEventListener('click', () => {
     const dd = document.getElementById('add-dropdown');
     dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
