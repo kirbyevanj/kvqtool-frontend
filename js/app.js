@@ -100,12 +100,14 @@ window.toggleWorkflowPanel = function() {
   const panel = document.getElementById('panel-workflow');
   const player = document.getElementById('video-analysis-player');
   const empty = document.getElementById('panel-empty');
-  if (panel.style.display === 'none') {
-    panel.style.display = 'block';
+  if (panel.style.display === 'none' || panel.style.display === '') {
+    panel.style.display = 'flex';
     player.style.display = 'none';
     empty.style.display = 'none';
-    const container = document.getElementById('drawflow-container');
-    wfb.initDrawflow(container);
+    setTimeout(() => {
+      const container = document.getElementById('drawflow-container');
+      wfb.initDrawflow(container);
+    }, 50);
     loadWorkflowList();
   } else {
     panel.style.display = 'none';

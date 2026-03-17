@@ -278,14 +278,6 @@ body {
 }
 .panel { padding: 20px; height: 100%; }
 
-#drawflow-container {
-  width: 100%;
-  height: calc(100% - 50px);
-  background: #0B1120;
-  border: 1px solid var(--border-dim);
-  border-radius: var(--radius);
-}
-.editor-actions { margin-top: 10px; }
 
 /* Player */
 .player-container { position: relative; }
