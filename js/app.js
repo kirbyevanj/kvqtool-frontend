@@ -1,4 +1,5 @@
 import * as vap from './video-analysis-player.js';
+import * as wfb from './workflow-builder.js';
 import { uploadToS3 } from './upload.js';
 import { connectJobWS } from './ws-progress.js';
 
@@ -94,6 +95,91 @@ window.onResDragStart = function(event, resourceId, name) {
   event.dataTransfer.setData('application/x-kvq-resource', JSON.stringify({ id: resourceId, name: name }));
   event.dataTransfer.effectAllowed = 'copy';
 };
+
+window.toggleWorkflowPanel = function() {
+  const panel = document.getElementById('panel-workflow');
+  const player = document.getElementById('video-analysis-player');
+  const empty = document.getElementById('panel-empty');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    player.style.display = 'none';
+    empty.style.display = 'none';
+    const container = document.getElementById('drawflow-container');
+    wfb.initDrawflow(container);
+    loadWorkflowList();
+  } else {
+    panel.style.display = 'none';
+    empty.style.display = 'block';
+  }
+};
+
+window.newWorkflow = function() {
+  wfb.clearEditor();
+  const container = document.getElementById('drawflow-container');
+  wfb.initDrawflow(container);
+};
+
+window.saveWorkflow = async function() {
+  const name = prompt('Workflow name:');
+  if (!name) return;
+  const dag = wfb.exportDAG(name, projectId);
+  if (!dag) return;
+
+  const wfId = wfb.getWorkflowId();
+  const method = wfId ? 'PUT' : 'POST';
+  const url = wfId
+    ? `/v1/projects/${projectId}/workflows/${wfId}`
+    : `/v1/projects/${projectId}/workflows`;
+
+  const resp = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, dag_json: dag }),
+  });
+  if (resp.ok) {
+    const data = await resp.json();
+    wfb.setWorkflowId(data.id);
+    loadWorkflowList();
+    document.getElementById('job-progress').textContent = 'Workflow saved';
+  }
+};
+
+window.runWorkflow = async function() {
+  const wfId = wfb.getWorkflowId();
+  if (!wfId) { alert('Save workflow first'); return; }
+
+  const resp = await fetch(`/v1/projects/${projectId}/jobs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ workflow_id: wfId }),
+  });
+  if (resp.ok) {
+    const data = await resp.json();
+    document.getElementById('job-progress').textContent = `Workflow started: ${data.run_id || data.job_id}`;
+  } else {
+    const err = await resp.json();
+    document.getElementById('job-progress').textContent = `Error: ${err.error || 'Unknown'}`;
+  }
+};
+
+window.loadSelectedWorkflow = async function(wfId) {
+  if (!wfId) return;
+  const resp = await fetch(`/v1/projects/${projectId}/workflows/${wfId}`);
+  if (!resp.ok) return;
+  const wf = await resp.json();
+  wfb.setWorkflowId(wf.id);
+  if (wf.dag_json) wfb.importDAG(wf.dag_json);
+};
+
+async function loadWorkflowList() {
+  const resp = await fetch(`/v1/projects/${projectId}/workflows`);
+  if (!resp.ok) return;
+  const workflows = await resp.json();
+  const sel = document.getElementById('wf-load-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Load Workflow --</option>' +
+    (workflows || []).map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+}
 
 window.triggerUpload = function() {
   document.getElementById('add-dropdown').style.display = 'none';

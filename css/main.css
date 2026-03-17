@@ -648,3 +648,53 @@ dialog input:focus, dialog textarea:focus {
 
 /* Viewport click for play/pause */
 .vap-viewport { cursor: pointer; }
+
+/* Workflow Builder */
+#panel-workflow { display: flex; flex-direction: column; height: 100%; }
+.wf-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-dim);
+  align-items: center;
+  flex-shrink: 0;
+}
+.wf-toolbar select {
+  padding: 5px 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+#drawflow-container {
+  flex: 1;
+  background: #0B1120;
+  border-radius: var(--radius);
+  min-height: 400px;
+}
+.wf-node {
+  padding: 8px;
+  font-size: 12px;
+}
+.wf-node p { margin-bottom: 6px; font-size: 13px; }
+.wf-node label { display: block; margin: 4px 0; font-size: 11px; color: var(--text-dim); }
+.wf-input {
+  width: 100%;
+  padding: 3px 6px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+.wf-select {
+  width: 100%;
+  padding: 3px 6px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
