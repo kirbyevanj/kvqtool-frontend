@@ -135,6 +135,35 @@ window.toggleWfMenu = function(id) {
 };
 window.refreshSidebar = function() { loadSidebar(); };
 
+window.downloadResource = async function(id) {
+  document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
+  const resp = await fetch(`/v1/projects/${projectId}/resources/${id}/download-url`);
+  if (!resp.ok) return;
+  const data = await resp.json();
+  window.open(data.download_url, '_blank');
+};
+
+window.copyResource = async function(id, name) {
+  document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
+  const resp = await fetch(`/v1/projects/${projectId}/resources/${id}/copy`, { method: 'POST' });
+  if (resp.ok) loadSidebar();
+  else alert('Copy failed');
+};
+
+window.downloadWorkflow = async function(id) {
+  document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
+  const resp = await fetch(`/v1/projects/${projectId}/workflows/${id}`);
+  if (!resp.ok) return;
+  const wf = await resp.json();
+  const blob = new Blob([JSON.stringify(wf.dag_json, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (wf.name || 'workflow') + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 window.onResDragStart = function(event, resourceId, name) {
   event.dataTransfer.setData('application/x-kvq-resource', JSON.stringify({ id: resourceId, name: name }));
   event.dataTransfer.effectAllowed = 'copy';
