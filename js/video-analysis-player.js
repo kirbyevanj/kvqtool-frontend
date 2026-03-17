@@ -45,6 +45,16 @@ export async function loadMedia(resourceId, projectId) {
     const dur = leftBackend.getDuration();
     if (dur) document.getElementById('vap-seekbar').max = Math.floor(dur * 1000);
   }, { once: true });
+
+  video.addEventListener('play', () => {
+    document.getElementById('vap-play-btn').textContent = 'Pause';
+    syncRight('play');
+  });
+  video.addEventListener('pause', () => {
+    document.getElementById('vap-play-btn').textContent = 'Play';
+    syncRight('pause');
+  });
+  video.addEventListener('seeked', () => { syncRight('seek'); });
 }
 
 export function togglePlay() {
@@ -110,14 +120,14 @@ export function toggleSplit() {
     pool.style.display = 'block';
     compare.style.display = 'block';
     divider.style.display = 'block';
-    primary.style.clipPath = `inset(0 ${(1 - splitPosition) * 100}% 0 0)`;
+    compare.style.clipPath = `inset(0 0 0 ${splitPosition * 100}%)`;
     divider.style.left = `${splitPosition * 100}%`;
     btn.classList.add('vap-btn-active');
   } else {
     pool.style.display = 'none';
     compare.style.display = 'none';
     divider.style.display = 'none';
-    primary.style.clipPath = 'none';
+    compare.style.clipPath = 'none';
     btn.classList.remove('vap-btn-active');
   }
 }
@@ -212,11 +222,19 @@ function rightVideoEl() { return document.getElementById('vap-video-right'); }
 
 function syncRight(action) {
   if (!splitActive || !rightBackend) return;
+  const rv = rightBackend.getVideoElement();
   const offset = (frameOffsets[rightVideoId] || 0) / fps;
   switch (action) {
-    case 'play': rightBackend.play(); break;
-    case 'pause': rightBackend.pause(); break;
-    case 'seek': rightBackend.seek(Math.max(0, leftBackend.getCurrentTime() + offset)); break;
+    case 'play':
+      rv.currentTime = Math.max(0, leftBackend.getCurrentTime() + offset);
+      rv.play().catch(() => {});
+      break;
+    case 'pause':
+      rv.pause();
+      break;
+    case 'seek':
+      rv.currentTime = Math.max(0, leftBackend.getCurrentTime() + offset);
+      break;
   }
 }
 
@@ -265,7 +283,7 @@ function attachDragListeners(divider) {
     const onMove = (ev) => {
       const rect = container.getBoundingClientRect();
       splitPosition = Math.max(0.05, Math.min(0.95, (ev.clientX - rect.left) / rect.width));
-      leftVideoEl().style.clipPath = `inset(0 ${(1 - splitPosition) * 100}% 0 0)`;
+      rightVideoEl().style.clipPath = `inset(0 0 0 ${splitPosition * 100}%)`;
       divider.style.left = `${splitPosition * 100}%`;
     };
     const onUp = () => {
