@@ -285,6 +285,7 @@ function init() {
       .then(p => { nameEl.textContent = p.name; });
   }
   loadSidebar();
+  setInterval(loadSidebar, 60000);
   initPoolDropZone();
   vap.init(projectId);
   document.getElementById('add-resource-btn')?.addEventListener('click', () => {
