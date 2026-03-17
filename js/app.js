@@ -104,13 +104,14 @@ window.toggleWorkflowPanel = function() {
     panel.style.display = 'flex';
     player.style.display = 'none';
     empty.style.display = 'none';
-    setTimeout(() => {
+    setTimeout(async () => {
       const container = document.getElementById('drawflow-container');
       wfb.initDrawflow(container);
       container.addEventListener('contextmenu', showNodeMenu);
       container.addEventListener('click', () => {
         document.getElementById('wf-node-menu').style.display = 'none';
       });
+      await refreshResourceDropdowns();
     }, 50);
     loadWorkflowList();
   } else {
@@ -122,13 +123,7 @@ window.toggleWorkflowPanel = function() {
 window.addWorkflowNode = async function(type) {
   wfb.addNode(type);
   document.getElementById('wf-node-menu').style.display = 'none';
-  if (type === 'ResourceDownload') {
-    const resp = await fetch(`/v1/projects/${projectId}/resources`);
-    if (resp.ok) {
-      const resources = await resp.json();
-      wfb.populateResourceDropdowns(resources || []);
-    }
-  }
+  await refreshResourceDropdowns();
 };
 
 window.showNodeMenu = function(e) {
@@ -148,6 +143,7 @@ window.newWorkflow = function() {
 window.saveWorkflow = async function() {
   const name = prompt('Workflow name:');
   if (!name) return;
+  await refreshResourceDropdowns();
   const dag = wfb.exportDAG(name, projectId);
   if (!dag) return;
 
@@ -195,7 +191,18 @@ window.loadSelectedWorkflow = async function(wfId) {
   const wf = await resp.json();
   wfb.setWorkflowId(wf.id);
   if (wf.dag_json) wfb.importDAG(wf.dag_json);
+  await refreshResourceDropdowns();
 };
+
+async function refreshResourceDropdowns() {
+  try {
+    const resp = await fetch(`/v1/projects/${projectId}/resources`);
+    if (resp.ok) {
+      const resources = await resp.json();
+      wfb.populateResourceDropdowns(resources || []);
+    }
+  } catch (e) {}
+}
 
 async function loadWorkflowList() {
   const resp = await fetch(`/v1/projects/${projectId}/workflows`);
