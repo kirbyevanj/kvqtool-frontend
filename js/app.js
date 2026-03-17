@@ -32,7 +32,7 @@ window.onResourceClick = function(id, type) {
   const row = document.querySelector(`.resource-item[data-id="${id}"]`);
   const label = row?.querySelector('.res-label')?.textContent?.trim() || '';
 
-  if (vap.isPlayerActive()) {
+  if (vap.isSplitActive()) {
     pendingSwitchId = id;
     pendingSwitchName = label;
     document.getElementById('confirm-switch-dialog').showModal();
