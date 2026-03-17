@@ -66,8 +66,7 @@ window.toggleResMenu = function(id, event) {
 
 window.addToCompare = function(id, name) {
   vap.addToPool(id, name, projectId);
-  document.getElementById('video-analysis-player').style.display = 'block';
-  document.getElementById('panel-empty').style.display = 'none';
+  showView('player');
 };
 
 window.deleteResource = async function(id) {
@@ -90,6 +89,29 @@ window.renameResource = async function(id) {
 };
 
 window.showPanel = function() {};
+
+window.showView = showView;
+function showView(view) {
+  const player = document.getElementById('video-analysis-player');
+  const workflow = document.getElementById('panel-workflow');
+  const empty = document.getElementById('panel-empty');
+
+  player.style.display = 'none';
+  workflow.style.display = 'none';
+  empty.style.display = 'none';
+
+  switch (view) {
+    case 'player':
+      if (vap.isPlayerActive()) player.style.display = 'flex';
+      else empty.style.display = 'block';
+      break;
+    case 'workflow':
+      workflow.style.display = 'flex';
+      break;
+    default:
+      empty.style.display = 'block';
+  }
+}
 
 window.onNodeDragStart = function(event, nodeType) {
   event.dataTransfer.setData('application/x-kvq-node', nodeType);
@@ -171,12 +193,8 @@ window.onResDragStart = function(event, resourceId, name) {
 
 window.toggleWorkflowPanel = function() {
   const panel = document.getElementById('panel-workflow');
-  const player = document.getElementById('video-analysis-player');
-  const empty = document.getElementById('panel-empty');
   if (panel.style.display === 'none' || panel.style.display === '') {
-    panel.style.display = 'flex';
-    player.style.display = 'none';
-    empty.style.display = 'none';
+    showView('workflow');
     setTimeout(async () => {
       const container = document.getElementById('drawflow-container');
       wfb.initDrawflow(container);
@@ -202,8 +220,7 @@ window.toggleWorkflowPanel = function() {
     }, 50);
     loadWorkflowList();
   } else {
-    panel.style.display = 'none';
-    empty.style.display = 'block';
+    showView('player');
   }
 };
 
