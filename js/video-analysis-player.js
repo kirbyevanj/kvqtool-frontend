@@ -15,6 +15,7 @@ let currentResourceId = null;
 let currentResourceName = null;
 let leftBackend = null;
 let rightBackend = null;
+let syncLoopId = null;
 let primaryResourceId = null; // the first video opened, cannot be removed from pool
 
 export function init(projectId) {
@@ -192,6 +193,7 @@ function openSplit() {
 
 function closeSplit() {
   splitActive = false;
+  stopSyncLoop();
   const pool = document.getElementById('vap-pool');
   const compare = rightVideoEl();
   const divider = document.getElementById('vap-divider');
@@ -342,14 +344,45 @@ function syncRight(action) {
   switch (action) {
     case 'play':
       rv.currentTime = Math.max(0, leftBackend.getCurrentTime() + offset);
-      rv.addEventListener('seeked', () => rv.play().catch(() => {}), { once: true });
+      rv.play().catch(() => {});
+      startSyncLoop();
       break;
     case 'pause':
       rv.pause();
+      stopSyncLoop();
       break;
     case 'seek':
       rv.currentTime = Math.max(0, leftBackend.getCurrentTime() + offset);
       break;
+  }
+}
+
+function startSyncLoop() {
+  stopSyncLoop();
+  const drift_threshold = 1 / fps; // one frame tolerance
+  const tick = () => {
+    if (!splitActive || !rightBackend || !leftBackend) return;
+    const lv = leftBackend.getVideoElement();
+    const rv = rightBackend.getVideoElement();
+    if (lv.paused) { stopSyncLoop(); return; }
+
+    const offset = (frameOffsets[rightVideoId] || 0) / fps;
+    const target = leftBackend.getCurrentTime() + offset;
+    const drift = rv.currentTime - target;
+
+    if (Math.abs(drift) > drift_threshold) {
+      rv.currentTime = target;
+    }
+
+    syncLoopId = requestAnimationFrame(tick);
+  };
+  syncLoopId = requestAnimationFrame(tick);
+}
+
+function stopSyncLoop() {
+  if (syncLoopId) {
+    cancelAnimationFrame(syncLoopId);
+    syncLoopId = null;
   }
 }
 
