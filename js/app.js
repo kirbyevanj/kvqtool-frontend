@@ -99,7 +99,11 @@ window.onNodeDragStart = function(event, nodeType) {
 window.deleteWorkflow = async function(id, name) {
   document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
   if (!confirm('Delete workflow "' + name + '"?')) return;
-  await fetch('/v1/projects/' + projectId + '/workflows/' + id, { method: 'DELETE' });
+  const resp = await fetch('/v1/projects/' + projectId + '/workflows/' + id, { method: 'DELETE' });
+  if (!resp.ok) {
+    const err = await resp.text();
+    alert('Delete failed: ' + err);
+  }
   loadSidebar();
 };
 
