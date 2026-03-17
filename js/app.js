@@ -221,6 +221,7 @@ window.saveWorkflow = async function() {
     wfb.setWorkflowId(data.id);
     loadWorkflowList();
     document.getElementById('job-progress').textContent = 'Workflow saved';
+    setTimeout(loadSidebar, 1000);
   }
 };
 
