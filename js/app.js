@@ -4,6 +4,8 @@ import { connectJobWS } from './ws-progress.js';
 
 let projectId = null;
 let pendingFiles = [];
+let pendingSwitchId = null;
+let pendingSwitchName = null;
 
 window.vapTogglePlay = () => vap.togglePlay();
 window.vapSeek = (val) => vap.seek(val);
@@ -12,21 +14,44 @@ window.vapToggleFrameMode = () => vap.toggleFrameMode();
 window.vapToggleSplit = () => vap.toggleSplit();
 window.vapToggleFullscreen = () => vap.toggleFullscreen();
 window.vapToggleControls = () => vap.toggleControls();
-window.vapAddCurrentToPool = () => vap.addCurrentToPool();
 window.vapSetLeft = (id) => vap.setLeft(id);
 window.vapSetRight = (id) => vap.setRight(id);
 window.vapRemoveFromPool = (id) => vap.removeFromPool(id);
 window.vapSetOffset = (id, val) => vap.setFrameOffset(id, val);
+window.vapBumpOffset = (id, dir) => vap.bumpFrameOffset(id, dir);
+window.vapViewportClick = (e) => {
+  if (e.target.closest('.vap-divider')) return;
+  vap.viewportClick();
+};
 
 window.onResourceClick = function(id, type) {
   document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
-  if (type === 'media') {
-    const row = document.querySelector(`.resource-item[data-id="${id}"]`);
-    const label = row?.querySelector('.res-label')?.textContent?.trim() || '';
+  if (type !== 'media') return;
+
+  const row = document.querySelector(`.resource-item[data-id="${id}"]`);
+  const label = row?.querySelector('.res-label')?.textContent?.trim() || '';
+
+  if (vap.isPlayerActive()) {
+    pendingSwitchId = id;
+    pendingSwitchName = label;
+    document.getElementById('confirm-switch-dialog').showModal();
+  } else {
     vap.setCurrentName(label);
     vap.loadMedia(id, projectId);
   }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('confirm-switch-btn')?.addEventListener('click', () => {
+    document.getElementById('confirm-switch-dialog').close();
+    if (pendingSwitchId) {
+      vap.setCurrentName(pendingSwitchName || '');
+      vap.loadMedia(pendingSwitchId, projectId);
+      pendingSwitchId = null;
+      pendingSwitchName = null;
+    }
+  });
+});
 
 window.toggleResMenu = function(id) {
   document.querySelectorAll('.res-menu').forEach(m => {
@@ -47,7 +72,6 @@ window.deleteResource = async function(id) {
   if (!confirm('Delete this resource?')) return;
   await fetch(`/v1/projects/${projectId}/resources/${id}`, { method: 'DELETE' });
   loadSidebar();
-  initPoolDropZone();
 };
 
 window.renameResource = async function(id) {
@@ -60,7 +84,6 @@ window.renameResource = async function(id) {
     body: JSON.stringify({ name }),
   });
   loadSidebar();
-  initPoolDropZone();
 };
 
 window.showPanel = function() {};
@@ -90,20 +113,13 @@ window.vapConfirmUpload = async function() {
   const repackage = document.getElementById('repackage-fmp4').checked;
   document.getElementById('upload-dialog').close();
   const progress = document.getElementById('job-progress');
-
   for (const file of pendingFiles) {
     progress.textContent = `Uploading ${file.name}...`;
     await uploadToS3(projectId, file);
-    if (repackage) {
-      progress.textContent = `Queuing fMP4 repackage for ${file.name}...`;
-      // TODO: POST to repackage endpoint once worker supports it
-    }
   }
-
   pendingFiles = [];
   progress.textContent = 'Upload complete';
   loadSidebar();
-  initPoolDropZone();
 };
 
 function loadSidebar() {
@@ -111,33 +127,10 @@ function loadSidebar() {
   htmx.ajax('GET', `/htmx/projects/${projectId}/sidebar`, '#folder-tree');
 }
 
-function init() {
-  const params = new URLSearchParams(window.location.search);
-  projectId = params.get('project');
-  if (!projectId) return;
-
-  const nameEl = document.getElementById('project-name');
-  if (nameEl) {
-    fetch(`/v1/projects/${projectId}`)
-      .then(r => r.json())
-      .then(p => { nameEl.textContent = p.name; });
-  }
-
-  loadSidebar();
-  initPoolDropZone();
-  vap.init(projectId);
-
-  document.getElementById('add-resource-btn')?.addEventListener('click', () => {
-    const dd = document.getElementById('add-dropdown');
-    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
-  });
-}
-
 function initPoolDropZone() {
   const pool = document.getElementById('vap-pool');
   const viewport = document.getElementById('video-analysis-player');
   if (!pool || !viewport) return;
-
   for (const el of [pool, viewport]) {
     el.addEventListener('dragover', (e) => {
       if (e.dataTransfer.types.includes('application/x-kvq-resource')) {
@@ -157,6 +150,25 @@ function initPoolDropZone() {
       pool.style.display = 'block';
     });
   }
+}
+
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  projectId = params.get('project');
+  if (!projectId) return;
+  const nameEl = document.getElementById('project-name');
+  if (nameEl) {
+    fetch(`/v1/projects/${projectId}`)
+      .then(r => r.json())
+      .then(p => { nameEl.textContent = p.name; });
+  }
+  loadSidebar();
+  initPoolDropZone();
+  vap.init(projectId);
+  document.getElementById('add-resource-btn')?.addEventListener('click', () => {
+    const dd = document.getElementById('add-dropdown');
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  });
 }
 
 document.addEventListener('click', () => {

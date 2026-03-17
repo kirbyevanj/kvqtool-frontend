@@ -31,9 +31,9 @@
 
     <main class="canvas" id="main-canvas">
       <div id="video-analysis-player" class="vap" style="display:none">
-        <div class="vap-viewport">
-          <video id="vap-video-left" class="vap-video" controls playsinline></video>
-          <video id="vap-video-right" class="vap-video vap-video-right" style="display:none"></video>
+        <div class="vap-viewport" onclick="vapViewportClick(event)">
+          <video id="vap-video-left" class="vap-video" playsinline></video>
+          <video id="vap-video-right" class="vap-video vap-video-right" playsinline style="display:none"></video>
           <div id="vap-divider" class="vap-divider" style="display:none"></div>
           <canvas id="vap-canvas" class="vap-canvas" style="display:none"></canvas>
           <div id="vap-metric-overlay" class="vap-metric-hud"></div>
@@ -52,13 +52,13 @@
             <button class="vap-btn" id="vap-framestep-btn" onclick="vapToggleFrameMode()">Frame Step</button>
             <button class="vap-btn" id="vap-split-btn" onclick="vapToggleSplit()">Split View</button>
             <button class="vap-btn" id="vap-fullscreen-btn" onclick="vapToggleFullscreen()">Fullscreen</button>
-            <button class="vap-btn vap-collapse-btn" onclick="vapToggleControls()">Hide Controls</button>
+            <button class="vap-btn vap-collapse-btn" onclick="vapToggleControls()">Hide</button>
           </div>
         </div>
+        <div class="vap-controls-nub" id="vap-controls-nub" style="display:none" onclick="vapToggleControls()"></div>
         <div id="vap-pool" class="vap-pool" style="display:none">
           <div class="vap-pool-header">
             <span>Comparison Pool</span>
-            <button class="btn btn-sm" onclick="vapAddCurrentToPool()">+ Add Current</button>
           </div>
           <div id="vap-pool-items"></div>
           <div class="vap-pool-selectors">
@@ -92,6 +92,17 @@
       <div class="dialog-actions">
         <button type="button" onclick="this.closest('dialog').close()">Cancel</button>
         <button type="button" class="btn btn-primary" onclick="vapConfirmUpload()">Upload</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-switch-dialog">
+    <form onsubmit="return false;">
+      <h3>Switch Media</h3>
+      <p>Close current player and open new media?</p>
+      <div class="dialog-actions">
+        <button type="button" onclick="this.closest('dialog').close()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirm-switch-btn">Switch</button>
       </div>
     </form>
   </dialog>

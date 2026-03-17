@@ -621,3 +621,43 @@ dialog input:focus, dialog textarea:focus {
   outline-offset: -2px;
   background: var(--accent-glow);
 }
+
+/* Controls nub (visible when controls are hidden) */
+.vap-controls-nub {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  z-index: 15;
+  opacity: 0.6;
+  transition: opacity var(--transition);
+}
+.vap-controls-nub:hover { opacity: 1; }
+
+/* Fullscreen: show custom controls, hide native */
+.vap:fullscreen .vap-video::-webkit-media-controls { display: none !important; }
+.vap:fullscreen .vap-controls {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 20;
+}
+.vap:fullscreen .vap-controls-nub {
+  position: absolute;
+  z-index: 20;
+}
+.vap:fullscreen .vap-pool {
+  position: absolute;
+  bottom: 90px; right: 0;
+  width: 350px;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  z-index: 20;
+}
+
+/* Viewport click for play/pause */
+.vap-viewport { cursor: pointer; }

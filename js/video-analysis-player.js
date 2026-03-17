@@ -15,6 +15,7 @@ let currentResourceId = null;
 let currentResourceName = null;
 let leftBackend = null;
 let rightBackend = null;
+let primaryResourceId = null; // the first video opened, cannot be removed from pool
 
 export function init(projectId) {
   currentProjectId = projectId;
@@ -22,11 +23,26 @@ export function init(projectId) {
   if (divider) attachDragListeners(divider);
 }
 
+export function isPlayerActive() {
+  return leftBackend !== null;
+}
+
 export async function loadMedia(resourceId, projectId) {
   const pid = projectId || currentProjectId;
   const resp = await fetch(`/v1/projects/${pid}/resources/${resourceId}/download-url`);
   if (!resp.ok) return;
   const data = await resp.json();
+
+  // Preserve timestamp if reloading same video
+  const prevTime = leftBackend ? leftBackend.getCurrentTime() : 0;
+
+  // Reset split state for new primary media
+  if (splitActive) closeSplit();
+  comparisonPool = [];
+  frameOffsets = {};
+  leftVideoId = null;
+  rightVideoId = null;
+  primaryResourceId = resourceId;
 
   currentResourceId = resourceId;
   const video = leftVideoEl();
@@ -46,29 +62,29 @@ export async function loadMedia(resourceId, projectId) {
     if (dur) document.getElementById('vap-seekbar').max = Math.floor(dur * 1000);
   }, { once: true });
 
-  video.addEventListener('play', () => {
-    document.getElementById('vap-play-btn').textContent = 'Pause';
-    syncRight('play');
-  });
-  video.addEventListener('pause', () => {
-    document.getElementById('vap-play-btn').textContent = 'Play';
-    syncRight('pause');
-  });
-  video.addEventListener('seeked', () => { syncRight('seek'); });
+  // Add to pool as primary
+  const name = currentResourceName || 'media';
+  ensureInPool(resourceId, name, data.download_url);
+  leftVideoId = resourceId;
+  updatePoolUI();
 }
 
 export function togglePlay() {
-  const b = leftBackend;
-  if (!b) return;
-  const v = b.getVideoElement();
-  if (v.paused) { b.play(); syncRight('play'); }
-  else { b.pause(); syncRight('pause'); }
+  if (!leftBackend) return;
+  const v = leftBackend.getVideoElement();
+  if (v.paused) { leftBackend.play(); syncRight('play'); }
+  else { leftBackend.pause(); syncRight('pause'); }
   document.getElementById('vap-play-btn').textContent = v.paused ? 'Play' : 'Pause';
+}
+
+export function viewportClick() {
+  togglePlay();
 }
 
 export function seek(val) {
   if (!leftBackend) return;
-  leftBackend.seek(val / 1000);
+  const time = val / 1000;
+  leftBackend.seek(time);
   syncRight('seek');
   updateFrame();
 }
@@ -78,12 +94,16 @@ export function stepFrame(dir) {
   const t = leftBackend.getCurrentTime();
   const dur = leftBackend.getDuration();
   if (!dur) return;
-  leftBackend.seek(Math.max(0, Math.min(dur, t + dir / fps)));
-  currentFrame = Math.round(leftBackend.getCurrentTime() * fps);
+  const newTime = Math.max(0, Math.min(dur, t + dir / fps));
+  leftBackend.seek(newTime);
+  currentFrame = Math.round(newTime * fps);
   document.getElementById('vap-frame-counter').textContent = `Frame: ${currentFrame}`;
   syncRight('seek');
-  if (frameMode) renderFrameToCanvas();
-  updateTimecode();
+  if (frameMode) {
+    const v = leftBackend.getVideoElement();
+    v.addEventListener('seeked', () => renderFrameToCanvas(), { once: true });
+  }
+  updateTimecodeFromTime(newTime);
 }
 
 export function toggleFrameMode() {
@@ -93,43 +113,95 @@ export function toggleFrameMode() {
   const canvas = document.getElementById('vap-canvas');
   const btn = document.getElementById('vap-framestep-btn');
 
+  // Preserve current time across mode toggle
+  const currentTime = leftBackend.getCurrentTime();
+
   if (frameMode) {
     leftBackend.pause();
     syncRight('pause');
     canvas.style.display = 'block';
     canvas.width = v.videoWidth || 1920;
     canvas.height = v.videoHeight || 1080;
-    renderFrameToCanvas();
+    // Ensure time hasn't changed
+    leftBackend.seek(currentTime);
+    v.addEventListener('seeked', () => renderFrameToCanvas(), { once: true });
     btn.classList.add('vap-btn-active');
   } else {
     canvas.style.display = 'none';
+    // Restore time
+    leftBackend.seek(currentTime);
     btn.classList.remove('vap-btn-active');
   }
 }
 
 export function toggleSplit() {
-  splitActive = !splitActive;
+  if (splitActive) {
+    closeSplit();
+  } else {
+    openSplit();
+  }
+}
+
+function openSplit() {
+  splitActive = true;
   const pool = document.getElementById('vap-pool');
   const compare = rightVideoEl();
   const divider = document.getElementById('vap-divider');
-  const primary = leftVideoEl();
   const btn = document.getElementById('vap-split-btn');
 
-  if (splitActive) {
-    ensureCurrentInPool();
-    pool.style.display = 'block';
-    compare.style.display = 'block';
-    divider.style.display = 'block';
-    compare.style.clipPath = `inset(0 0 0 ${splitPosition * 100}%)`;
-    divider.style.left = `${splitPosition * 100}%`;
-    btn.classList.add('vap-btn-active');
-  } else {
-    pool.style.display = 'none';
-    compare.style.display = 'none';
-    divider.style.display = 'none';
-    compare.style.clipPath = 'none';
-    btn.classList.remove('vap-btn-active');
+  // Preserve timestamp
+  const currentTime = leftBackend ? leftBackend.getCurrentTime() : 0;
+
+  // Ensure current media in pool
+  if (currentResourceId && leftBackend) {
+    const v = leftBackend.getVideoElement();
+    ensureInPool(currentResourceId, currentResourceName || 'media', v.src);
+    leftVideoId = currentResourceId;
   }
+
+  pool.style.display = 'block';
+  compare.style.display = 'block';
+  divider.style.display = 'block';
+  compare.style.clipPath = `inset(0 0 0 ${splitPosition * 100}%)`;
+  divider.style.left = `${splitPosition * 100}%`;
+  btn.classList.add('vap-btn-active');
+
+  // Restore timestamp
+  if (leftBackend) leftBackend.seek(currentTime);
+
+  // If right side empty and pool has >1 item, auto-fill right
+  if (!rightVideoId && comparisonPool.length > 1) {
+    const other = comparisonPool.find(v => v.resourceId !== leftVideoId);
+    if (other) setRight(other.resourceId);
+  }
+
+  // Sync right to same timestamp
+  if (rightBackend) {
+    const offset = (frameOffsets[rightVideoId] || 0) / fps;
+    rightBackend.seek(Math.max(0, currentTime + offset));
+  }
+
+  updatePoolUI();
+}
+
+function closeSplit() {
+  splitActive = false;
+  const pool = document.getElementById('vap-pool');
+  const compare = rightVideoEl();
+  const divider = document.getElementById('vap-divider');
+  const btn = document.getElementById('vap-split-btn');
+
+  // Preserve timestamp
+  const currentTime = leftBackend ? leftBackend.getCurrentTime() : 0;
+
+  pool.style.display = 'none';
+  compare.style.display = 'none';
+  divider.style.display = 'none';
+  compare.style.clipPath = 'none';
+  btn.classList.remove('vap-btn-active');
+
+  // Restore timestamp
+  if (leftBackend) leftBackend.seek(currentTime);
 }
 
 export function toggleFullscreen() {
@@ -140,7 +212,10 @@ export function toggleFullscreen() {
 
 export function toggleControls() {
   controlsVisible = !controlsVisible;
-  document.getElementById('vap-controls').style.display = controlsVisible ? 'block' : 'none';
+  const controls = document.getElementById('vap-controls');
+  const nub = document.getElementById('vap-controls-nub');
+  controls.style.display = controlsVisible ? 'block' : 'none';
+  nub.style.display = controlsVisible ? 'none' : 'block';
   if (!controlsVisible) {
     const pool = document.getElementById('vap-pool');
     if (pool) pool.style.display = 'none';
@@ -153,15 +228,26 @@ export async function addToPool(resourceId, name, projectId) {
   const resp = await fetch(`/v1/projects/${pid}/resources/${resourceId}/download-url`);
   if (!resp.ok) return;
   const data = await resp.json();
-  const cleanName = stripUUIDPrefix(name);
+  const cleanName = stripEmoji(stripUUIDPrefix(name));
   comparisonPool.push({ resourceId, name: cleanName, url: data.download_url });
   frameOffsets[resourceId] = 0;
   updatePoolUI();
+
+  // Auto-open split and auto-fill right if not set
+  if (!splitActive) openSplit();
+  if (!rightVideoId && resourceId !== leftVideoId) {
+    setRight(resourceId);
+  }
 }
 
 export function removeFromPool(resourceId) {
+  if (resourceId === primaryResourceId) return; // cannot remove primary
   comparisonPool = comparisonPool.filter(v => v.resourceId !== resourceId);
   delete frameOffsets[resourceId];
+  if (rightVideoId === resourceId) {
+    rightVideoId = null;
+    if (rightBackend) { rightBackend.destroy(); rightBackend = null; }
+  }
   updatePoolUI();
 }
 
@@ -169,11 +255,13 @@ export function setLeft(resourceId) {
   const entry = comparisonPool.find(v => v.resourceId === resourceId);
   if (!entry) return;
   leftVideoId = resourceId;
+  const currentTime = leftBackend ? leftBackend.getCurrentTime() : 0;
   const v = leftVideoEl();
   if (leftBackend) leftBackend.destroy();
   leftBackend = createBackend(entry.url, v);
   leftBackend.load(entry.url);
   v.dataset.resourceId = resourceId;
+  v.addEventListener('loadeddata', () => leftBackend.seek(currentTime), { once: true });
 }
 
 export function setRight(resourceId) {
@@ -184,32 +272,43 @@ export function setRight(resourceId) {
   if (rightBackend) rightBackend.destroy();
   rightBackend = createBackend(entry.url, v);
   rightBackend.load(entry.url);
-}
-
-export function setFrameOffset(resourceId, offset) {
-  frameOffsets[resourceId] = parseInt(offset, 10) || 0;
-}
-
-export function addCurrentToPool() {
-  ensureCurrentInPool();
-}
-
-function ensureCurrentInPool() {
-  if (!leftBackend || !currentProjectId || !currentResourceId) return;
-  const v = leftBackend.getVideoElement();
-  if (!v.src) return;
-  const rid = currentResourceId;
-  const name = currentResourceName || stripEmoji(stripUUIDPrefix(decodeURIComponent(v.src.split('/').pop().split('?')[0] || 'current')));
-  if (!comparisonPool.find(p => p.resourceId === rid)) {
-    comparisonPool.push({ resourceId: rid, name, url: v.src });
-    frameOffsets[rid] = 0;
-  }
-  leftVideoId = rid;
+  // Sync to left timestamp
+  const offset = (frameOffsets[resourceId] || 0) / fps;
+  const leftTime = leftBackend ? leftBackend.getCurrentTime() : 0;
+  v.addEventListener('loadeddata', () => {
+    rightBackend.seek(Math.max(0, leftTime + offset));
+  }, { once: true });
   updatePoolUI();
 }
 
+export function setFrameOffset(resourceId, offset) {
+  const val = Math.max(0, parseInt(offset, 10) || 0);
+  const oldVal = frameOffsets[resourceId] || 0;
+  frameOffsets[resourceId] = val;
+  // Actively seek the right video to reflect the offset change
+  if (rightVideoId === resourceId && rightBackend && leftBackend) {
+    rightBackend.seek(Math.max(0, leftBackend.getCurrentTime() + val / fps));
+  }
+  updatePoolUI();
+}
+
+export function bumpFrameOffset(resourceId, dir) {
+  const current = frameOffsets[resourceId] || 0;
+  setFrameOffset(resourceId, Math.max(0, current + dir));
+}
+
+export function setCurrentName(name) {
+  currentResourceName = stripEmoji(stripUUIDPrefix(name));
+}
+
 export function isSplitActive() { return splitActive; }
-export function setCurrentName(name) { currentResourceName = stripEmoji(stripUUIDPrefix(name)); }
+
+function ensureInPool(resourceId, name, url) {
+  if (comparisonPool.find(p => p.resourceId === resourceId)) return;
+  const cleanName = stripEmoji(stripUUIDPrefix(name));
+  comparisonPool.push({ resourceId, name: cleanName, url });
+  frameOffsets[resourceId] = 0;
+}
 
 function stripEmoji(name) {
   return name.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}]/gu, '').trim();
@@ -250,7 +349,10 @@ function updateFrame() {
 
 function updateTimecode() {
   if (!leftBackend) return;
-  const t = leftBackend.getCurrentTime();
+  updateTimecodeFromTime(leftBackend.getCurrentTime());
+}
+
+function updateTimecodeFromTime(t) {
   const h = Math.floor(t / 3600);
   const m = Math.floor((t % 3600) / 60);
   const s = Math.floor(t % 60);
@@ -258,7 +360,8 @@ function updateTimecode() {
   document.getElementById('vap-timecode').textContent =
     `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}:${String(f).padStart(2,'0')}`;
   document.getElementById('vap-seekbar').value = Math.floor(t * 1000);
-  updateFrame();
+  currentFrame = Math.round(t * fps);
+  document.getElementById('vap-frame-counter').textContent = `Frame: ${currentFrame}`;
 }
 
 function renderFrameToCanvas() {
@@ -305,10 +408,12 @@ function updatePoolUI() {
   const rightSel = document.getElementById('vap-right-select');
   if (!container || !leftSel || !rightSel) return;
 
-  container.innerHTML = comparisonPool.map(v =>
-    `<div class="pool-item"><span>${v.name}</span>
-     <button class="btn btn-sm btn-danger" onclick="window.vapRemoveFromPool('${v.resourceId}')">x</button></div>`
-  ).join('');
+  container.innerHTML = comparisonPool.map(v => {
+    const isPrimary = v.resourceId === primaryResourceId;
+    const removeBtn = isPrimary ? '' :
+      `<button class="btn btn-sm btn-danger" onclick="window.vapRemoveFromPool('${v.resourceId}')">x</button>`;
+    return `<div class="pool-item"><span>${v.name}</span>${removeBtn}</div>`;
+  }).join('');
 
   const opts = comparisonPool.map(v => `<option value="${v.resourceId}">${v.name}</option>`).join('');
   leftSel.innerHTML = '<option value="">-- Left --</option>' + opts;
@@ -317,9 +422,13 @@ function updatePoolUI() {
   if (rightVideoId) rightSel.value = rightVideoId;
 
   document.getElementById('vap-offset-controls').innerHTML = comparisonPool.map(v =>
-    `<div class="offset-row"><label>${v.name}</label>
-     <input type="number" value="${frameOffsets[v.resourceId]||0}"
-       onchange="window.vapSetOffset('${v.resourceId}',this.value)" class="offset-input">
-     <span class="offset-label">frames</span></div>`
+    `<div class="offset-row">
+      <label>${v.name}</label>
+      <button class="vap-btn" onclick="window.vapBumpOffset('${v.resourceId}',-1)">-</button>
+      <input type="number" value="${frameOffsets[v.resourceId]||0}" min="0"
+        onchange="window.vapSetOffset('${v.resourceId}',this.value)" class="offset-input">
+      <button class="vap-btn" onclick="window.vapBumpOffset('${v.resourceId}',1)">+</button>
+      <span class="offset-label">frames</span>
+    </div>`
   ).join('');
 }
