@@ -107,6 +107,10 @@ window.toggleWorkflowPanel = function() {
     setTimeout(() => {
       const container = document.getElementById('drawflow-container');
       wfb.initDrawflow(container);
+      container.addEventListener('contextmenu', showNodeMenu);
+      container.addEventListener('click', () => {
+        document.getElementById('wf-node-menu').style.display = 'none';
+      });
     }, 50);
     loadWorkflowList();
   } else {
@@ -115,7 +119,18 @@ window.toggleWorkflowPanel = function() {
   }
 };
 
-window.addWorkflowNode = function(type) { wfb.addNode(type); };
+window.addWorkflowNode = function(type) {
+  wfb.addNode(type);
+  document.getElementById('wf-node-menu').style.display = 'none';
+};
+
+window.showNodeMenu = function(e) {
+  e.preventDefault();
+  const menu = document.getElementById('wf-node-menu');
+  menu.style.left = e.clientX + 'px';
+  menu.style.top = e.clientY + 'px';
+  menu.style.display = 'block';
+};
 
 window.newWorkflow = function() {
   wfb.clearEditor();

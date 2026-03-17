@@ -86,6 +86,16 @@
           </select>
         </div>
         <div class="wf-body">
+          <div id="wf-node-menu" class="wf-node-menu" style="display:none">
+            <button onclick="addWorkflowNode('S3Download')">S3 Download</button>
+            <button onclick="addWorkflowNode('GStreamerEncode')">x264 Encode</button>
+            <button onclick="addWorkflowNode('GStreamerMetrics')">Metrics Analysis</button>
+            <button onclick="addWorkflowNode('S3Upload')">S3 Upload</button>
+            <button onclick="addWorkflowNode('SplitVideo')">Split Video</button>
+            <button onclick="addWorkflowNode('ConcatVideo')">Concat Video</button>
+            <button onclick="addWorkflowNode('GenerateReport')">Generate Report</button>
+            <button onclick="addWorkflowNode('FragmentedMP4Repackage')">fMP4 Repackage</button>
+          </div>
           <div class="wf-palette" id="wf-palette">
             <div class="wf-palette-title">Nodes</div>
             <button class="wf-palette-item" onclick="addWorkflowNode('S3Download')">S3 Download</button>
