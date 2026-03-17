@@ -39,7 +39,7 @@ window.onResourceClick = function(id, type) {
   } else {
     vap.setCurrentName(label);
     vap.loadMedia(id, projectId);
-    showView("player");
+    showView("player", true);
   }
 };
 
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
       vap.loadMedia(pendingSwitchId, projectId);
       pendingSwitchId = null;
       pendingSwitchName = null;
-      showView("player");
+      showView("player", true);
     }
   });
 });
@@ -94,7 +94,7 @@ window.renameResource = async function(id) {
 window.showPanel = function() {};
 
 window.showView = showView;
-function showView(view) {
+function showView(view, force) {
   const player = document.getElementById('video-analysis-player');
   const workflow = document.getElementById('panel-workflow');
   const empty = document.getElementById('panel-empty');
@@ -105,7 +105,7 @@ function showView(view) {
 
   switch (view) {
     case 'player':
-      if (vap.isPlayerActive()) {
+      if (force || vap.isPlayerActive()) {
         player.style.display = "flex";
         const vp = document.querySelector(".vap-viewport"); if (vp) { vp.style.height = ""; vp.style.flex = ""; }
       } else {
