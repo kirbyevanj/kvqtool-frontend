@@ -90,6 +90,7 @@ window.renameResource = async function(id) {
 };
 
 window.showPanel = function() {};
+window.refreshSidebar = function() { loadSidebar(); };
 
 window.onResDragStart = function(event, resourceId, name) {
   event.dataTransfer.setData('application/x-kvq-resource', JSON.stringify({ id: resourceId, name: name }));
