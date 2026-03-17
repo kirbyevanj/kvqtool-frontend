@@ -272,11 +272,12 @@ body {
 
 /* Main canvas */
 .canvas {
-  overflow: auto;
+  overflow-y: auto;
   position: relative;
   background: var(--bg);
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 .panel { padding: 20px; height: 100%; }
 
@@ -414,21 +415,21 @@ dialog input:focus, dialog textarea:focus {
 .vap {
   display: flex;
   flex-direction: column;
-  max-height: 60vh;
-  flex-shrink: 0;
+  flex: 1;
+  min-height: 0;
   background: #000;
   position: relative;
 }
 .vap-viewport {
+  flex: 1;
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #000;
-  max-height: calc(60vh - 90px);
-  aspect-ratio: 16/9;
-  width: 100%;
+  min-height: 0;
+  max-width: 100%;
 }
 .vap-video {
   width: 100%;
