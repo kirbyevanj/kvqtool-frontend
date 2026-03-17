@@ -206,24 +206,27 @@ window.toggleWorkflowPanel = function() {
     setTimeout(async () => {
       const container = document.getElementById('drawflow-container');
       wfb.initDrawflow(container);
-      container.addEventListener('contextmenu', showNodeMenu);
-      container.addEventListener('click', () => {
-        document.getElementById('wf-node-menu').style.display = 'none';
-      });
-      container.addEventListener('dragover', (e) => {
-        if (e.dataTransfer.types.includes('application/x-kvq-node')) {
+      if (!container._kvqListenersAttached) {
+        container._kvqListenersAttached = true;
+        container.addEventListener('contextmenu', showNodeMenu);
+        container.addEventListener('click', () => {
+          document.getElementById('wf-node-menu').style.display = 'none';
+        });
+        container.addEventListener('dragover', (e) => {
+          if (e.dataTransfer.types.includes('application/x-kvq-node')) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+          }
+        });
+        container.addEventListener('drop', async (e) => {
           e.preventDefault();
-          e.dataTransfer.dropEffect = 'copy';
-        }
-      });
-      container.addEventListener('drop', async (e) => {
-        e.preventDefault();
-        const nodeType = e.dataTransfer.getData('application/x-kvq-node');
-        if (nodeType) {
-          wfb.addNode(nodeType);
-          await refreshResourceDropdowns();
-        }
-      });
+          const nodeType = e.dataTransfer.getData('application/x-kvq-node');
+          if (nodeType) {
+            wfb.addNode(nodeType);
+            await refreshResourceDropdowns();
+          }
+        });
+      }
       await refreshResourceDropdowns();
     }, 50);
     loadWorkflowList();
