@@ -104,7 +104,8 @@ function showView(view) {
   switch (view) {
     case 'player':
       if (vap.isPlayerActive()) {
-        player.style.display = 'flex';
+        player.style.display = "flex";
+        const vp = document.querySelector(".vap-viewport"); if (vp) { vp.style.height = ""; vp.style.flex = ""; }
       } else {
         empty.style.display = 'block';
       }
