@@ -231,7 +231,7 @@ function openSplit() {
 
 function closeSplit() {
   splitActive = false;
-  stopSyncLoop();
+  stopFrameSync();
   const pool = document.getElementById('vap-pool');
   const compare = rightVideoEl();
   const divider = document.getElementById('vap-divider');
