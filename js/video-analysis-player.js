@@ -130,6 +130,7 @@ export function seek(val) {
 
 export function stepFrame(dir) {
   if (!leftBackend) return;
+  if (!frameMode) toggleFrameMode();
   const t = leftBackend.getCurrentTime();
   const dur = leftBackend.getDuration();
   if (!dur) return;
