@@ -63,6 +63,17 @@ const nodeTemplates = {
       <label>Profile <select df-profile class="wf-select">
         <option selected>high</option><option>main</option><option>baseline</option>
       </select></label>
+      <label>Output Width <input type="number" df-scale_width value="" class="wf-input" placeholder="e.g. 1920"></label>
+      <label>Output Height <input type="number" df-scale_height value="" class="wf-input" placeholder="e.g. 1080"></label>
+      <label>Scale Method <select df-scale_method class="wf-select">
+        <option value="">None (keep original)</option>
+        <option value="lanczos">Lanczos (sharp, best quality)</option>
+        <option value="bilinear">Bilinear (fast)</option>
+        <option value="bicubic">Bicubic (balanced)</option>
+        <option value="nearest">Nearest Neighbor (pixel art)</option>
+        <option value="sinc">Sinc (high quality)</option>
+        <option value="spline">Spline (smooth)</option>
+      </select></label>
       <label>Start Time <input type="text" df-start_time value="" class="wf-input" placeholder="e.g. 00:00:05"></label>
       <label>End Time <input type="text" df-end_time value="" class="wf-input" placeholder="e.g. 00:01:30"></label>
     </div>`
@@ -114,6 +125,17 @@ const nodeDefaults = {
       </select></label>
       <label>Profile <select df-profile class="wf-select">
         <option selected>high</option><option>main</option><option>baseline</option>
+      </select></label>
+      <label>Output Width <input type="number" df-scale_width value="" class="wf-input" placeholder="e.g. 1920"></label>
+      <label>Output Height <input type="number" df-scale_height value="" class="wf-input" placeholder="e.g. 1080"></label>
+      <label>Scale Method <select df-scale_method class="wf-select">
+        <option value="">None (keep original)</option>
+        <option value="lanczos">Lanczos (sharp, best quality)</option>
+        <option value="bilinear">Bilinear (fast)</option>
+        <option value="bicubic">Bicubic (balanced)</option>
+        <option value="nearest">Nearest Neighbor (pixel art)</option>
+        <option value="sinc">Sinc (high quality)</option>
+        <option value="spline">Spline (smooth)</option>
       </select></label>
       <label>Start Time <input type="text" df-start_time value="" class="wf-input" placeholder="e.g. 00:00:05"></label>
       <label>End Time <input type="text" df-end_time value="" class="wf-input" placeholder="e.g. 00:01:30"></label>
