@@ -21,6 +21,12 @@ export function init(projectId) {
   currentProjectId = projectId;
   const divider = document.getElementById('vap-divider');
   if (divider) attachDragListeners(divider);
+
+  document.addEventListener('fullscreenchange', () => {
+    const btn = document.getElementById('vap-fullscreen-btn');
+    if (!document.fullscreenElement) btn.classList.remove('vap-btn-active');
+    else btn.classList.add('vap-btn-active');
+  });
 }
 
 export function isPlayerActive() {
@@ -206,8 +212,14 @@ function closeSplit() {
 
 export function toggleFullscreen() {
   const el = document.getElementById('video-analysis-player');
-  if (document.fullscreenElement) document.exitFullscreen();
-  else el.requestFullscreen();
+  const btn = document.getElementById('vap-fullscreen-btn');
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+    btn.classList.remove('vap-btn-active');
+  } else {
+    el.requestFullscreen();
+    btn.classList.add('vap-btn-active');
+  }
 }
 
 export function toggleControls() {
@@ -330,7 +342,7 @@ function syncRight(action) {
   switch (action) {
     case 'play':
       rv.currentTime = Math.max(0, leftBackend.getCurrentTime() + offset);
-      rv.play().catch(() => {});
+      rv.addEventListener('seeked', () => rv.play().catch(() => {}), { once: true });
       break;
     case 'pause':
       rv.pause();
@@ -392,6 +404,7 @@ function attachDragListeners(divider) {
       splitPosition = Math.max(0.05, Math.min(0.95, (ev.clientX - rect.left) / rect.width));
       rightVideoEl().style.clipPath = `inset(0 0 0 ${splitPosition * 100}%)`;
       divider.style.left = `${splitPosition * 100}%`;
+      if (frameMode) renderFrameToCanvas();
     };
     const onUp = () => {
       divider.removeEventListener('pointermove', onMove);

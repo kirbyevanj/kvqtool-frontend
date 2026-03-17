@@ -53,12 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-window.toggleResMenu = function(id) {
+window.toggleResMenu = function(id, event) {
   document.querySelectorAll('.res-menu').forEach(m => {
     if (m.id !== 'res-menu-' + id) m.style.display = 'none';
   });
   const menu = document.getElementById('res-menu-' + id);
-  if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  if (!menu) return;
+  const show = menu.style.display === 'none';
+  menu.style.display = show ? 'block' : 'none';
 };
 
 window.addToCompare = function(id, name) {
