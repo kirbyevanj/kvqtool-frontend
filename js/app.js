@@ -119,9 +119,16 @@ window.toggleWorkflowPanel = function() {
   }
 };
 
-window.addWorkflowNode = function(type) {
+window.addWorkflowNode = async function(type) {
   wfb.addNode(type);
   document.getElementById('wf-node-menu').style.display = 'none';
+  if (type === 'ResourceDownload') {
+    const resp = await fetch(`/v1/projects/${projectId}/resources`);
+    if (resp.ok) {
+      const resources = await resp.json();
+      wfb.populateResourceDropdowns(resources || []);
+    }
+  }
 };
 
 window.showNodeMenu = function(e) {

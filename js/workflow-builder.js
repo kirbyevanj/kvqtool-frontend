@@ -2,10 +2,10 @@ let editor = null;
 let currentWorkflowId = null;
 
 const nodeTemplates = {
-  S3Download: {
+  ResourceDownload: {
     inputs: 0, outputs: 1,
-    html: `<div class="wf-node"><p><strong>S3 Download</strong></p>
-      <label>Resource <select df-resource_id class="wf-select"><option value="">Select...</option></select></label></div>`
+    html: `<div class="wf-node"><p><strong>Resource Download</strong></p>
+      <label>Resource <select df-resource_id class="wf-select"></select></label></div>`
   },
   GStreamerEncode: {
     inputs: 1, outputs: 1,
@@ -25,9 +25,9 @@ const nodeTemplates = {
       <label><input type="checkbox" df-ssim checked> SSIM</label>
       <label><input type="checkbox" df-psnr checked> PSNR</label></div>`
   },
-  S3Upload: {
+  ResourceUpload: {
     inputs: 1, outputs: 0,
-    html: `<div class="wf-node"><p><strong>S3 Upload</strong></p>
+    html: `<div class="wf-node"><p><strong>Resource Upload</strong></p>
       <label>Name <input type="text" df-output_name value="output.mp4" class="wf-input"></label></div>`
   },
   SplitVideo: {
@@ -114,3 +114,13 @@ export function clearEditor() {
 export function setWorkflowId(id) { currentWorkflowId = id; }
 export function getWorkflowId() { return currentWorkflowId; }
 export function getNodeTypes() { return Object.keys(nodeTemplates); }
+
+
+export function populateResourceDropdowns(resources) {
+  const opts = resources.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+  document.querySelectorAll('select[df-resource_id]').forEach(sel => {
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Select resource...</option>' + opts;
+    if (current) sel.value = current;
+  });
+}
