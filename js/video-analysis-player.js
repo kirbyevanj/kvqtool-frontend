@@ -79,8 +79,9 @@ export async function loadMedia(resourceId, projectId) {
 export function togglePlay() {
   if (!leftBackend) return;
   const v = leftBackend.getVideoElement();
-  if (v.paused) { leftBackend.play(); syncRight('play'); }
-  else { leftBackend.pause(); syncRight('pause'); }
+  const t = leftBackend.getCurrentTime();
+  if (v.paused) { leftBackend.play(); syncRight('play', t); }
+  else { leftBackend.pause(); syncRight('pause', t); }
   document.getElementById('vap-play-btn').textContent = v.paused ? 'Play' : 'Pause';
 }
 
@@ -91,12 +92,30 @@ export function viewportClick() {
 export function seek(val) {
   if (!leftBackend) return;
   const time = val / 1000;
-  leftBackend.seek(time);
   const lv = leftBackend.getVideoElement();
-  lv.addEventListener('seeked', () => {
-    syncRight('seek');
-    updateFrame();
-  }, { once: true });
+  const wasPlaying = !lv.paused;
+
+  if (wasPlaying) leftBackend.pause();
+
+  leftBackend.seek(time);
+  updateTimecodeFromTime(time);
+
+  if (splitActive && rightBackend) {
+    const rv = rightBackend.getVideoElement();
+    if (wasPlaying) rightBackend.pause();
+    const offset = (frameOffsets[rightVideoId] || 0) / fps;
+    rv.currentTime = Math.max(0, time + offset);
+
+    if (wasPlaying) {
+      waitForBothSeeked(lv, rv, () => {
+        leftBackend.play();
+        rv.play().catch(() => {});
+        startFrameSync();
+      });
+    }
+  } else if (wasPlaying) {
+    lv.addEventListener('seeked', () => leftBackend.play(), { once: true });
+  }
 }
 
 export function stepFrame(dir) {
@@ -109,11 +128,11 @@ export function stepFrame(dir) {
   currentFrame = Math.round(newTime * fps);
   document.getElementById('vap-frame-counter').textContent = `Frame: ${currentFrame}`;
   updateTimecodeFromTime(newTime);
-  const v = leftBackend.getVideoElement();
-  v.addEventListener('seeked', () => {
-    syncRight('seek');
-    if (frameMode) renderFrameToCanvas();
-  }, { once: true });
+  syncRight('seek', newTime);
+  if (frameMode) {
+    const v = leftBackend.getVideoElement();
+    v.addEventListener('seeked', () => renderFrameToCanvas(), { once: true });
+  }
 }
 
 export function toggleFrameMode() {
@@ -340,17 +359,40 @@ function stripUUIDPrefix(name) {
 function leftVideoEl() { return document.getElementById('vap-video-left'); }
 function rightVideoEl() { return document.getElementById('vap-video-right'); }
 
-function syncRight(action) {
+function waitForBothSeeked(videoA, videoB, callback) {
+  let aReady = false;
+  let bReady = false;
+  const check = () => { if (aReady && bReady) callback(); };
+
+  if (videoA.readyState >= 2 && !videoA.seeking) {
+    aReady = true;
+  } else {
+    videoA.addEventListener('seeked', () => { aReady = true; check(); }, { once: true });
+  }
+
+  if (videoB.readyState >= 2 && !videoB.seeking) {
+    bReady = true;
+  } else {
+    videoB.addEventListener('seeked', () => { bReady = true; check(); }, { once: true });
+  }
+
+  check();
+}
+
+function syncRight(action, explicitTime) {
   if (!splitActive || !rightBackend) return;
   const rv = rightBackend.getVideoElement();
   const offset = (frameOffsets[rightVideoId] || 0) / fps;
+  const baseTime = explicitTime !== undefined ? explicitTime : leftBackend.getVideoElement().currentTime;
+  const target = Math.max(0, baseTime + offset);
+
   switch (action) {
     case 'play': {
-      const targetTime = Math.max(0, leftBackend.getVideoElement().currentTime + offset);
-      rv.currentTime = targetTime;
-      rv.addEventListener('seeked', () => {
+      const lv = leftBackend.getVideoElement();
+      rv.currentTime = target;
+      waitForBothSeeked(lv, rv, () => {
         rv.play().catch(() => {});
-      }, { once: true });
+      });
       startFrameSync();
       break;
     }
@@ -360,8 +402,7 @@ function syncRight(action) {
       stopFrameSync();
       break;
     case 'seek':
-      const leftTime = leftBackend.getVideoElement().currentTime;
-      rv.currentTime = Math.max(0, leftTime + offset);
+      rv.currentTime = target;
       break;
   }
 }
