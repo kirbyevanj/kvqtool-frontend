@@ -134,8 +134,13 @@ export function stepFrame(dir) {
   updateTimecodeFromTime(newTime);
   syncRight('seek', newTime);
   if (frameMode) {
-    const v = leftBackend.getVideoElement();
-    v.addEventListener('seeked', () => renderFrameToCanvas(), { once: true });
+    const lv = leftBackend.getVideoElement();
+    if (splitActive && rightBackend) {
+      const rv = rightBackend.getVideoElement();
+      waitForBothSeeked(lv, rv, () => renderFrameToCanvas());
+    } else {
+      lv.addEventListener('seeked', () => renderFrameToCanvas(), { once: true });
+    }
   }
 }
 
