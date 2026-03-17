@@ -115,6 +115,8 @@ window.toggleWorkflowPanel = function() {
   }
 };
 
+window.addWorkflowNode = function(type) { wfb.addNode(type); };
+
 window.newWorkflow = function() {
   wfb.clearEditor();
   const container = document.getElementById('drawflow-container');

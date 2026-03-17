@@ -690,3 +690,45 @@ dialog input:focus, dialog textarea:focus {
   border-radius: var(--radius-sm);
   font-size: 12px;
 }
+
+/* Workflow palette */
+.wf-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.wf-palette {
+  width: 140px;
+  background: var(--surface);
+  border-right: 1px solid var(--border-dim);
+  padding: 8px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.wf-palette-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.wf-palette-item {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 12px;
+  text-align: left;
+  transition: all var(--transition);
+}
+.wf-palette-item:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--accent);
+}

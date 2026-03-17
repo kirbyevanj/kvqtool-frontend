@@ -85,7 +85,20 @@
             <option value="">-- Load Workflow --</option>
           </select>
         </div>
-        <div id="drawflow-container"></div>
+        <div class="wf-body">
+          <div class="wf-palette" id="wf-palette">
+            <div class="wf-palette-title">Nodes</div>
+            <button class="wf-palette-item" onclick="addWorkflowNode('S3Download')">S3 Download</button>
+            <button class="wf-palette-item" onclick="addWorkflowNode('GStreamerEncode')">x264 Encode</button>
+            <button class="wf-palette-item" onclick="addWorkflowNode('GStreamerMetrics')">Metrics</button>
+            <button class="wf-palette-item" onclick="addWorkflowNode('S3Upload')">S3 Upload</button>
+            <button class="wf-palette-item" onclick="addWorkflowNode('SplitVideo')">Split Video</button>
+            <button class="wf-palette-item" onclick="addWorkflowNode('ConcatVideo')">Concat Video</button>
+            <button class="wf-palette-item" onclick="addWorkflowNode('GenerateReport')">Gen Report</button>
+            <button class="wf-palette-item" onclick="addWorkflowNode('FragmentedMP4Repackage')">fMP4 Repack</button>
+          </div>
+          <div id="drawflow-container"></div>
+        </div>
       </div>
 
       <div id="panel-empty" class="panel">
