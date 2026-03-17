@@ -80,13 +80,13 @@ window.deleteResource = async function(id) {
     resizeHandle.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       resizeHandle.setPointerCapture(e.pointerId);
-      const playerEl = document.getElementById('video-analysis-player');
+      const viewport = document.querySelector('.vap-viewport');
       const startY = e.clientY;
-      const startH = playerEl.offsetHeight;
+      const startH = viewport.offsetHeight;
       const onMove = (ev) => {
-        const newH = Math.max(150, startH + (ev.clientY - startY));
-        playerEl.style.height = newH + 'px';
-        playerEl.style.flex = 'none';
+        const newH = Math.max(100, startH + (ev.clientY - startY));
+        viewport.style.height = newH + 'px';
+        viewport.style.flex = 'none';
       };
       const onUp = () => {
         resizeHandle.removeEventListener('pointermove', onMove);
