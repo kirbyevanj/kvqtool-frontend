@@ -74,28 +74,6 @@ window.deleteResource = async function(id) {
   if (!confirm('Delete this resource?')) return;
   await fetch(`/v1/projects/${projectId}/resources/${id}`, { method: 'DELETE' });
   loadSidebar();
-
-  const resizeHandle = document.getElementById('vap-resize');
-  if (resizeHandle) {
-    resizeHandle.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      resizeHandle.setPointerCapture(e.pointerId);
-      const viewport = document.querySelector('.vap-viewport');
-      const startY = e.clientY;
-      const startH = viewport.offsetHeight;
-      const onMove = (ev) => {
-        const newH = Math.max(100, startH + (ev.clientY - startY));
-        viewport.style.height = newH + 'px';
-        viewport.style.flex = 'none';
-      };
-      const onUp = () => {
-        resizeHandle.removeEventListener('pointermove', onMove);
-        resizeHandle.removeEventListener('pointerup', onUp);
-      };
-      resizeHandle.addEventListener('pointermove', onMove);
-      resizeHandle.addEventListener('pointerup', onUp);
-    });
-  }
 };
 
 window.renameResource = async function(id) {
