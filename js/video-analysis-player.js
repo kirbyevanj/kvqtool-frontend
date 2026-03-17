@@ -199,7 +199,7 @@ function ensureCurrentInPool() {
   const v = leftBackend.getVideoElement();
   if (!v.src) return;
   const rid = currentResourceId;
-  const name = currentResourceName || stripUUIDPrefix(decodeURIComponent(v.src.split('/').pop().split('?')[0] || 'current'));
+  const name = currentResourceName || stripEmoji(stripUUIDPrefix(decodeURIComponent(v.src.split('/').pop().split('?')[0] || 'current')));
   if (!comparisonPool.find(p => p.resourceId === rid)) {
     comparisonPool.push({ resourceId: rid, name, url: v.src });
     frameOffsets[rid] = 0;
@@ -209,7 +209,11 @@ function ensureCurrentInPool() {
 }
 
 export function isSplitActive() { return splitActive; }
-export function setCurrentName(name) { currentResourceName = stripUUIDPrefix(name); }
+export function setCurrentName(name) { currentResourceName = stripEmoji(stripUUIDPrefix(name)); }
+
+function stripEmoji(name) {
+  return name.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}]/gu, '').trim();
+}
 
 function stripUUIDPrefix(name) {
   const d = name.indexOf('-');
