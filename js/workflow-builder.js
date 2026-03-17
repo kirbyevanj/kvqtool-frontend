@@ -63,6 +63,17 @@ export function addNode(type) {
   editor.addNode(type, tmpl.inputs, tmpl.outputs, pos.x, pos.y, type.toLowerCase(), {}, tmpl.html);
 }
 
+const nodeDefaults = {
+  ResourceDownload: { resource_id: '' },
+  ResourceUpload: { output_name: 'output.mp4' },
+  GStreamerEncode: { crf: '23', preset: 'medium', gop_length: '250' },
+  GStreamerMetrics: { vmaf: 'true', ssim: 'true', psnr: 'true' },
+  SplitVideo: { segment_duration: '4' },
+  ConcatVideo: {},
+  GenerateReport: {},
+  FragmentedMP4Repackage: {},
+};
+
 export function exportDAG(name, projectId) {
   if (!editor) return null;
   const raw = editor.export();
@@ -83,7 +94,8 @@ export function exportDAG(name, projectId) {
       }
     }
 
-    const params = { ...node.data, project_id: projectId };
+    const defaults = nodeDefaults[node.name] || {};
+    const params = { ...defaults, ...node.data, project_id: projectId };
     nodes[String(id)] = {
       id: String(id),
       type: node.name,
