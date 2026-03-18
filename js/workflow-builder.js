@@ -122,6 +122,7 @@ const nodeTemplates = {
       <label><input type="checkbox" df-vmaf checked> VMAF</label>
       <label><input type="checkbox" df-ssim checked> SSIM</label>
       <label><input type="checkbox" df-psnr checked> PSNR</label>
+      <label>Output Name <input type="text" df-output_name value="metrics.json" class="wf-input"></label>
       <label>Resize Algo <select df-scale_method class="wf-select">
         <option value="bicubic" selected>Bicubic (default)</option>
         <option value="bilinear">Bilinear</option>
@@ -250,7 +251,7 @@ const nodeDefaults = {
   ResourceDownload: { resource_id: '' },
   ResourceUpload: { output_name: 'output.mp4' },
   x264Transcode: { crf: '23', preset: 'medium', gop_length: '250', profile: 'high' },
-  FileMetricAnalysis: { vmaf: 'true', ssim: 'true', psnr: 'true', scale_method: 'bicubic' },
+  FileMetricAnalysis: { vmaf: 'true', ssim: 'true', psnr: 'true', scale_method: 'bicubic', output_name: 'metrics.json' },
   x264RemoteTranscode: { crf: '23', preset: 'medium', gop_length: '250', profile: 'high', output_name: 'encoded.mp4' },
   RemoteFileMetricAnalysis: { vmaf: 'true', ssim: 'true', psnr: 'true', scale_method: 'bicubic', output_name: 'metrics.json' },
   SceneCut: { threshold: '0.3' },
