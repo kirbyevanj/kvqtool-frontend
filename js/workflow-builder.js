@@ -120,7 +120,18 @@ const nodeTemplates = {
     html: `<div class="wf-node"><p><strong>File Metric Analysis</strong></p>
       <label><input type="checkbox" df-vmaf checked> VMAF</label>
       <label><input type="checkbox" df-ssim checked> SSIM</label>
-      <label><input type="checkbox" df-psnr checked> PSNR</label></div>`
+      <label><input type="checkbox" df-psnr checked> PSNR</label>
+      <label>Resize Algo <select df-scale_method class="wf-select">
+        <option value="bicubic" selected>Bicubic (default)</option>
+        <option value="bilinear">Bilinear</option>
+        <option value="fast_bilinear">Fast Bilinear</option>
+        <option value="lanczos">Lanczos</option>
+        <option value="sinc">Sinc</option>
+        <option value="spline">Spline</option>
+        <option value="area">Area (best for downscale)</option>
+        <option value="neighbor">Nearest Neighbor</option>
+        <option value="gauss">Gaussian</option>
+      </select></label></div>`
   },
 
   // --- Remote Processing ---
@@ -153,6 +164,17 @@ const nodeTemplates = {
       <label><input type="checkbox" df-vmaf checked> VMAF</label>
       <label><input type="checkbox" df-ssim checked> SSIM</label>
       <label><input type="checkbox" df-psnr checked> PSNR</label>
+      <label>Resize Algo <select df-scale_method class="wf-select">
+        <option value="bicubic" selected>Bicubic (default)</option>
+        <option value="bilinear">Bilinear</option>
+        <option value="fast_bilinear">Fast Bilinear</option>
+        <option value="lanczos">Lanczos</option>
+        <option value="sinc">Sinc</option>
+        <option value="spline">Spline</option>
+        <option value="area">Area (best for downscale)</option>
+        <option value="neighbor">Nearest Neighbor</option>
+        <option value="gauss">Gaussian</option>
+      </select></label>
       <label>Output Name <input type="text" df-output_name value="metrics.json" class="wf-input"></label></div>`
   },
 
@@ -227,9 +249,9 @@ const nodeDefaults = {
   ResourceDownload: { resource_id: '' },
   ResourceUpload: { output_name: 'output.mp4' },
   x264Transcode: { crf: '23', preset: 'medium', gop_length: '250', profile: 'high' },
-  FileMetricAnalysis: { vmaf: 'true', ssim: 'true', psnr: 'true' },
+  FileMetricAnalysis: { vmaf: 'true', ssim: 'true', psnr: 'true', scale_method: 'bicubic' },
   x264RemoteTranscode: { crf: '23', preset: 'medium', gop_length: '250', profile: 'high', output_name: 'encoded.mp4' },
-  RemoteFileMetricAnalysis: { vmaf: 'true', ssim: 'true', psnr: 'true', output_name: 'metrics.json' },
+  RemoteFileMetricAnalysis: { vmaf: 'true', ssim: 'true', psnr: 'true', scale_method: 'bicubic', output_name: 'metrics.json' },
   SceneCut: { threshold: '0.3' },
   RemoteSceneCut: { threshold: '0.3' },
   TransnetV2SceneCut: { threshold: '0.5' },
