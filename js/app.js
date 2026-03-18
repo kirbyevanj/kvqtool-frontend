@@ -319,6 +319,23 @@ async function refreshResourceDropdowns() {
       wfb.populateResourceDropdowns(resources || []);
     }
   } catch (e) {}
+  try {
+    const resp = await fetch(`/v1/projects/${projectId}/workflows`);
+    if (resp.ok) {
+      const workflows = await resp.json();
+      wfb.populateWorkflowDropdowns(workflows || []);
+    }
+  } catch (e) {}
+  renderSessionLegend();
+}
+
+function renderSessionLegend() {
+  const legend = document.getElementById('wf-session-legend');
+  if (!legend) return;
+  const colors = wfb.getSessionColors();
+  legend.innerHTML = colors.map((c, i) =>
+    `<div class="wf-session-legend-item"><span class="wf-session-legend-swatch" style="border-color:${c}"></span>Session ${i}</div>`
+  ).join('');
 }
 
 async function loadWorkflowList() {

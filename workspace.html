@@ -99,26 +99,53 @@
         <div class="wf-body">
           <div id="wf-node-menu" class="wf-node-menu" style="display:none">
             <button onclick="addWorkflowNode('ResourceDownload')">Resource Download</button>
-            <button onclick="addWorkflowNode('GStreamerEncode')">x264 Encode</button>
-            <button onclick="addWorkflowNode('GStreamerMetrics')">Metrics Analysis</button>
             <button onclick="addWorkflowNode('ResourceUpload')">Resource Upload</button>
-            <button onclick="addWorkflowNode('SplitVideo')">Split Video</button>
-            <button onclick="addWorkflowNode('ConcatVideo')">Concat Video</button>
+            <button onclick="addWorkflowNode('x264Transcode')">x264 Transcode</button>
+            <button onclick="addWorkflowNode('FileMetricAnalysis')">File Metrics</button>
+            <button onclick="addWorkflowNode('x264RemoteTranscode')">x264 Remote Transcode</button>
+            <button onclick="addWorkflowNode('RemoteFileMetricAnalysis')">Remote Metrics</button>
+            <button onclick="addWorkflowNode('SceneCut')">Scene Cut</button>
+            <button onclick="addWorkflowNode('RemoteSceneCut')">Remote Scene Cut</button>
+            <button onclick="addWorkflowNode('TransnetV2SceneCut')">TransNet V2</button>
+            <button onclick="addWorkflowNode('SegmentMedia')">Segment Media</button>
+            <button onclick="addWorkflowNode('RemoteSegmentMedia')">Remote Segment</button>
+            <button onclick="addWorkflowNode('SceneCutDispatch')">SceneCut Dispatch</button>
+            <button onclick="addWorkflowNode('CompositeWorkflow')">Composite Workflow</button>
             <button onclick="addWorkflowNode('GenerateReport')">Generate Report</button>
-            <button onclick="addWorkflowNode('RemoteEncodeX264')">Remote x264 Encode</button>
             <button onclick="addWorkflowNode('FragmentedMP4Repackage')">fMP4 Repackage</button>
           </div>
           <div class="wf-palette" id="wf-palette">
-            <div class="wf-palette-title">Nodes</div>
-            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'ResourceDownload')">Resource Download</button>
-            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'GStreamerEncode')">x264 Encode</button>
-            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'GStreamerMetrics')">Metrics</button>
-            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'ResourceUpload')">Resource Upload</button>
-            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'SplitVideo')">Split Video</button>
-            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'ConcatVideo')">Concat Video</button>
+            <div class="wf-palette-title">Storage</div>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'ResourceDownload')">Download</button>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'ResourceUpload')">Upload</button>
+
+            <div class="wf-palette-title" style="margin-top:10px">Local Processing</div>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'x264Transcode')">x264 Transcode</button>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'FileMetricAnalysis')">File Metrics</button>
+
+            <div class="wf-palette-title" style="margin-top:10px">Remote Processing</div>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'x264RemoteTranscode')">x264 Remote</button>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'RemoteFileMetricAnalysis')">Remote Metrics</button>
+
+            <div class="wf-palette-title" style="margin-top:10px">Scene Detection</div>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'SceneCut')">Scene Cut</button>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'RemoteSceneCut')">Remote Scene Cut</button>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'TransnetV2SceneCut')">TransNet V2</button>
+
+            <div class="wf-palette-title" style="margin-top:10px">Segmentation</div>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'SegmentMedia')">Segment Media</button>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'RemoteSegmentMedia')">Remote Segment</button>
+
+            <div class="wf-palette-title" style="margin-top:10px">Orchestration</div>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'SceneCutDispatch')">SceneCut Dispatch</button>
+            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'CompositeWorkflow')">Composite WF</button>
+
+            <div class="wf-palette-title" style="margin-top:10px">Utility</div>
             <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'GenerateReport')">Gen Report</button>
-            <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'RemoteEncodeX264')">Remote x264</button>
             <button class="wf-palette-item" draggable="true" ondragstart="onNodeDragStart(event,'FragmentedMP4Repackage')">fMP4 Repack</button>
+
+            <div class="wf-palette-title" style="margin-top:14px">Session Groups</div>
+            <div id="wf-session-legend" class="wf-session-legend"></div>
           </div>
           <div id="drawflow-container"></div>
         </div>

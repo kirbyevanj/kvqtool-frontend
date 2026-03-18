@@ -854,3 +854,83 @@ dialog input:focus, dialog textarea:focus {
   background: var(--text-muted);
   border-radius: 2px;
 }
+
+/* Session group legend */
+.wf-session-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.wf-session-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.wf-session-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 2px dashed;
+  flex-shrink: 0;
+}
+
+/* Node detail sections (collapsible advanced params) */
+.wf-details {
+  margin-top: 6px;
+  font-size: 11px;
+}
+.wf-details summary {
+  cursor: pointer;
+  color: var(--text-dim);
+  user-select: none;
+  padding: 2px 0;
+}
+.wf-details[open] summary {
+  color: var(--text-primary);
+}
+.wf-hint {
+  display: block;
+  color: var(--text-dim);
+  font-size: 10px;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* Port type badges */
+.wf-port-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  min-height: 18px;
+}
+.port-badges {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.port-badges-in  { justify-content: flex-start; }
+.port-badges-out { justify-content: flex-end; }
+.port-badge {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 3px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Session group node borders (applied dynamically) */
+.drawflow .drawflow-node.session-group-0 { border: 2px dashed #22C55E !important; }
+.drawflow .drawflow-node.session-group-1 { border: 2px dashed #3B82F6 !important; }
+.drawflow .drawflow-node.session-group-2 { border: 2px dashed #F59E0B !important; }
+.drawflow .drawflow-node.session-group-3 { border: 2px dashed #EF4444 !important; }
+.drawflow .drawflow-node.session-group-4 { border: 2px dashed #8B5CF6 !important; }
+.drawflow .drawflow-node.session-group-5 { border: 2px dashed #EC4899 !important; }
