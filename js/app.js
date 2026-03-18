@@ -137,10 +137,40 @@ window.deleteWorkflow = async function(id, name) {
 
   };
 
-window.editWorkflow = function(id) {
+window.editWorkflow = async function(id) {
   document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
-  toggleWorkflowPanel();
-  loadSelectedWorkflow(id);
+  // Always show the workflow panel; do NOT toggle (which would close it if already open).
+  const panel = document.getElementById('panel-workflow');
+  if (panel.style.display !== 'flex') {
+    showView('workflow');
+    const container = document.getElementById('drawflow-container');
+    wfb.initDrawflow(container);
+    if (!container._kvqListenersAttached) {
+      container._kvqListenersAttached = true;
+      container.addEventListener('contextmenu', showNodeMenu);
+      container.addEventListener('click', () => {
+        document.getElementById('wf-node-menu').style.display = 'none';
+      });
+      container.addEventListener('dragover', (e) => {
+        if (e.dataTransfer.types.includes('application/x-kvq-node')) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        }
+      });
+      container.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        const nodeType = e.dataTransfer.getData('application/x-kvq-node');
+        if (nodeType) {
+          wfb.addNode(nodeType);
+          await refreshResourceDropdowns();
+        }
+      });
+    }
+    loadWorkflowList();
+    // Wait for layout to settle before loading workflow into the editor.
+    await new Promise(r => setTimeout(r, 80));
+  }
+  await loadSelectedWorkflow(id);
 };
 
 window.copyWorkflow = async function(id) {
@@ -308,7 +338,9 @@ window.loadSelectedWorkflow = async function(wfId) {
   wfb.setWorkflowId(wf.id);
   if (wf.dag_json) wfb.importDAG(wf.dag_json);
   await refreshResourceDropdowns();
-  if (wf.dag_json) wfb.restoreSelectValues(wf.dag_json);
+  wfb.restoreSelectValues();
+  // Force Drawflow to repaint after the panel may have been hidden/resized.
+  wfb.zoomReset();
 };
 
 async function refreshResourceDropdowns() {

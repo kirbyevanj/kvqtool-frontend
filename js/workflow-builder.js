@@ -32,21 +32,20 @@ const NODE_PORT_SPECS = {
   CompositeWorkflow:       { in: ['any'],                   out: ['any'] },
 };
 
-function portBadge(types, side) {
-  if (!types || types.length === 0) return '';
-  const badges = types.map(t => {
-    const spec = PORT_TYPES[t] || PORT_TYPES.any;
-    return `<span class="port-badge" style="background:${spec.color}" title="${side}: ${spec.label}">${spec.label}</span>`;
-  }).join('');
-  return `<div class="port-badges port-badges-${side}">${badges}</div>`;
-}
-
-function portRow(nodeType) {
+// portStrip generates the bottom port-type indicator row for a node.
+// customLeft overrides the auto-generated left (input) labels (for multi-input nodes with named ports).
+function portStrip(nodeType, customLeft) {
   const spec = NODE_PORT_SPECS[nodeType] || { in: [], out: [] };
-  const inBadges  = portBadge(spec.in,  'in');
-  const outBadges = portBadge(spec.out, 'out');
-  if (!inBadges && !outBadges) return '';
-  return `<div class="wf-port-row">${inBadges}${outBadges}</div>`;
+  let leftHTML = customLeft !== undefined ? customLeft : spec.in.map(t => {
+    const p = PORT_TYPES[t] || PORT_TYPES.any;
+    return `<span class="port-tag" style="--pc:${p.color}">${p.label}</span>`;
+  }).join('');
+  const rightHTML = spec.out.map(t => {
+    const p = PORT_TYPES[t] || PORT_TYPES.any;
+    return `<span class="port-tag" style="--pc:${p.color}">${p.label}</span>`;
+  }).join('');
+  if (!leftHTML && !rightHTML) return '';
+  return `<div class="wf-port-strip"><div class="wf-ps-in">${leftHTML}</div><div class="wf-ps-out">${rightHTML}</div></div>`;
 }
 
 const LOCAL_NODE_TYPES = new Set([
@@ -55,23 +54,28 @@ const LOCAL_NODE_TYPES = new Set([
   'GenerateReport', 'FragmentedMP4Repackage'
 ]);
 
+// Named input labels for 2-input metric analysis nodes.
+const METRIC_IN_LABELS = `<span class="port-tag" style="--pc:#6366F1">① ref</span><span class="port-tag" style="--pc:#6366F1">② dist</span>`;
+
 const nodeTemplates = {
   // --- Storage ---
   ResourceDownload: {
     inputs: 0, outputs: 1,
-    html: `<div class="wf-node">${portRow('ResourceDownload')}<p><strong>Resource Download</strong></p>
-      <label>Resource <select df-resource_id class="wf-select"></select></label></div>`
+    html: `<div class="wf-node"><p><strong>Resource Download</strong></p>
+      <label>Resource <select df-resource_id class="wf-select"></select></label>
+      ${portStrip('ResourceDownload')}</div>`
   },
   ResourceUpload: {
     inputs: 1, outputs: 0,
-    html: `<div class="wf-node">${portRow('ResourceUpload')}<p><strong>Resource Upload</strong></p>
-      <label>Name <input type="text" df-output_name value="output.mp4" class="wf-input"></label></div>`
+    html: `<div class="wf-node"><p><strong>Resource Upload</strong></p>
+      <label>Name <input type="text" df-output_name value="output.mp4" class="wf-input"></label>
+      ${portStrip('ResourceUpload')}</div>`
   },
 
   // --- Local Processing ---
   x264Transcode: {
     inputs: 1, outputs: 1,
-    html: `<div class="wf-node">${portRow('x264Transcode')}<p><strong>x264 Transcode</strong></p>
+    html: `<div class="wf-node"><p><strong>x264 Transcode</strong></p>
       <label>CRF <input type="number" df-crf value="23" min="0" max="51" class="wf-input"></label>
       <label>Preset <select df-preset class="wf-select">
         <option>ultrafast</option><option>superfast</option><option>veryfast</option>
@@ -85,20 +89,23 @@ const nodeTemplates = {
       <label>End Time <input type="text" df-end_time value="" class="wf-input" placeholder="HH:MM:SS.mmm"></label>
       <label>Width <input type="number" df-scale_width value="" class="wf-input" placeholder="e.g. 1920"></label>
       <label>Height <input type="number" df-scale_height value="" class="wf-input" placeholder="e.g. 1080"></label>
-      <label>Scale <select df-scale_method class="wf-select"><option value="">None</option><option value="lanczos">Lanczos</option><option value="bilinear">Bilinear</option><option value="bicubic">Bicubic</option></select></label></div>`
+      <label>Scale <select df-scale_method class="wf-select"><option value="">None</option><option value="lanczos">Lanczos</option><option value="bilinear">Bilinear</option><option value="bicubic">Bicubic</option></select></label>
+      ${portStrip('x264Transcode')}</div>`
   },
   FileMetricAnalysis: {
     inputs: 2, outputs: 1,
-    html: `<div class="wf-node">${portRow('FileMetricAnalysis')}<p><strong>File Metric Analysis</strong></p>
+    html: `<div class="wf-node"><p><strong>File Metric Analysis</strong></p>
+      <div class="wf-in-ports"><span class="wf-in-lbl">① Reference video</span><span class="wf-in-lbl">② Distorted video</span></div>
       <label><input type="checkbox" df-vmaf checked> VMAF</label>
       <label><input type="checkbox" df-ssim checked> SSIM</label>
-      <label><input type="checkbox" df-psnr checked> PSNR</label></div>`
+      <label><input type="checkbox" df-psnr checked> PSNR</label>
+      ${portStrip('FileMetricAnalysis', METRIC_IN_LABELS)}</div>`
   },
 
   // --- Remote Processing ---
   x264RemoteTranscode: {
     inputs: 0, outputs: 1,
-    html: `<div class="wf-node">${portRow('x264RemoteTranscode')}<p><strong>x264 Remote Transcode</strong></p>
+    html: `<div class="wf-node"><p><strong>x264 Remote Transcode</strong></p>
       <label>Resource <select df-resource_id class="wf-select"></select></label>
       <label>Output Name <input type="text" df-output_name value="encoded.mp4" class="wf-input"></label>
       <label>CRF <input type="number" df-crf value="23" min="0" max="51" class="wf-input"></label>
@@ -115,82 +122,94 @@ const nodeTemplates = {
       <label>Height <input type="number" df-scale_height value="" class="wf-input" placeholder="e.g. 1080"></label>
       <label>Scale <select df-scale_method class="wf-select"><option value="">None</option><option value="lanczos">Lanczos</option><option value="bilinear">Bilinear</option></select></label>
       <label>Start <input type="text" df-start_time value="" class="wf-input" placeholder="HH:MM:SS.mmm"></label>
-      <label>End <input type="text" df-end_time value="" class="wf-input" placeholder="HH:MM:SS.mmm"></label></div>`
+      <label>End <input type="text" df-end_time value="" class="wf-input" placeholder="HH:MM:SS.mmm"></label>
+      ${portStrip('x264RemoteTranscode')}</div>`
   },
   RemoteFileMetricAnalysis: {
     inputs: 0, outputs: 1,
-    html: `<div class="wf-node">${portRow('RemoteFileMetricAnalysis')}<p><strong>Remote Metric Analysis</strong></p>
+    html: `<div class="wf-node"><p><strong>Remote Metric Analysis</strong></p>
       <label>Reference <select df-reference_resource_id class="wf-select"></select></label>
       <label>Distorted <select df-distorted_resource_id class="wf-select"></select></label>
       <label><input type="checkbox" df-vmaf checked> VMAF</label>
       <label><input type="checkbox" df-ssim checked> SSIM</label>
       <label><input type="checkbox" df-psnr checked> PSNR</label>
-      <label>Output Name <input type="text" df-output_name value="metrics.json" class="wf-input"></label></div>`
+      <label>Output Name <input type="text" df-output_name value="metrics.json" class="wf-input"></label>
+      ${portStrip('RemoteFileMetricAnalysis')}</div>`
   },
 
   // --- Scene Detection ---
   SceneCut: {
     inputs: 1, outputs: 1,
-    html: `<div class="wf-node">${portRow('SceneCut')}<p><strong>Scene Cut</strong></p>
-      <label>Threshold <input type="number" df-threshold value="0.3" min="0" max="1" step="0.05" class="wf-input"></label></div>`
+    html: `<div class="wf-node"><p><strong>Scene Cut</strong></p>
+      <label>Threshold <input type="number" df-threshold value="0.3" min="0" max="1" step="0.05" class="wf-input"></label>
+      ${portStrip('SceneCut')}</div>`
   },
   RemoteSceneCut: {
     inputs: 0, outputs: 1,
-    html: `<div class="wf-node">${portRow('RemoteSceneCut')}<p><strong>Remote Scene Cut (TransNet V2)</strong></p>
+    html: `<div class="wf-node"><p><strong>Remote Scene Cut (TransNet V2)</strong></p>
       <label>Resource <select df-resource_id class="wf-select"></select></label>
       <label>Threshold <input type="range" df-threshold value="0.5" min="0" max="1" step="0.01" class="wf-input" oninput="this.nextElementSibling.textContent=this.value"><span>0.5</span></label>
       <details class="wf-details"><summary>Frame Dimensions</summary>
         <label>Width <input type="number" df-frame_width value="48" min="1" class="wf-input" placeholder="48"></label>
         <label>Height <input type="number" df-frame_height value="27" min="1" class="wf-input" placeholder="27"></label>
         <small class="wf-hint">TransNet V2 default: 48×27. Change only for custom/fine-tuned models.</small>
-      </details></div>`
+      </details>
+      ${portStrip('RemoteSceneCut')}</div>`
   },
+  // TransnetV2SceneCut is kept in nodeTemplates for import compatibility but not shown in palette.
   TransnetV2SceneCut: {
     inputs: 1, outputs: 1,
-    html: `<div class="wf-node">${portRow('TransnetV2SceneCut')}<p><strong>TransNet V2 Scene Cut</strong></p>
+    html: `<div class="wf-node"><p><strong>TransNet V2 Scene Cut</strong></p>
       <label>Threshold <input type="range" df-threshold value="0.5" min="0" max="1" step="0.01" class="wf-input" oninput="this.nextElementSibling.textContent=this.value"><span>0.5</span></label>
       <details class="wf-details"><summary>Frame Dimensions</summary>
         <label>Width <input type="number" df-frame_width value="48" min="1" class="wf-input" placeholder="48"></label>
         <label>Height <input type="number" df-frame_height value="27" min="1" class="wf-input" placeholder="27"></label>
         <small class="wf-hint">TransNet V2 default: 48×27. Change only for custom/fine-tuned models.</small>
-      </details></div>`
+      </details>
+      ${portStrip('TransnetV2SceneCut')}</div>`
   },
 
   // --- Segmentation ---
   SegmentMedia: {
     inputs: 1, outputs: 1,
-    html: `<div class="wf-node">${portRow('SegmentMedia')}<p><strong>Segment Media</strong></p>
-      <label>Duration (s) <input type="number" df-segment_duration value="10" min="1" class="wf-input"></label></div>`
+    html: `<div class="wf-node"><p><strong>Segment Media</strong></p>
+      <label>Duration (s) <input type="number" df-segment_duration value="10" min="1" class="wf-input"></label>
+      ${portStrip('SegmentMedia')}</div>`
   },
   RemoteSegmentMedia: {
     inputs: 0, outputs: 1,
-    html: `<div class="wf-node">${portRow('RemoteSegmentMedia')}<p><strong>Remote Segment Media</strong></p>
+    html: `<div class="wf-node"><p><strong>Remote Segment Media</strong></p>
       <label>Resource <select df-resource_id class="wf-select"></select></label>
-      <label>Duration (s) <input type="number" df-segment_duration value="10" min="1" class="wf-input"></label></div>`
+      <label>Duration (s) <input type="number" df-segment_duration value="10" min="1" class="wf-input"></label>
+      ${portStrip('RemoteSegmentMedia')}</div>`
   },
 
   // --- Orchestration ---
   SceneCutDispatch: {
     inputs: 1, outputs: 1,
-    html: `<div class="wf-node">${portRow('SceneCutDispatch')}<p><strong>SceneCut Dispatch</strong></p>
+    html: `<div class="wf-node"><p><strong>SceneCut Dispatch</strong></p>
       <label>Workflow <select df-workflow_ref class="wf-select wf-workflow-select"></select></label>
       <label>Source URI <input type="text" df-source_uri value="" class="wf-input" placeholder="From upstream"></label>
-      <label>Batch Size <input type="number" df-batch_size value="16" min="1" class="wf-input"></label></div>`
+      <label>Batch Size <input type="number" df-batch_size value="16" min="1" class="wf-input"></label>
+      ${portStrip('SceneCutDispatch')}</div>`
   },
   CompositeWorkflow: {
     inputs: 1, outputs: 1,
-    html: `<div class="wf-node">${portRow('CompositeWorkflow')}<p><strong>Composite Workflow</strong></p>
-      <label>Workflow <select df-workflow_ref class="wf-select wf-workflow-select"></select></label></div>`
+    html: `<div class="wf-node"><p><strong>Composite Workflow</strong></p>
+      <label>Workflow <select df-workflow_ref class="wf-select wf-workflow-select"></select></label>
+      ${portStrip('CompositeWorkflow')}</div>`
   },
 
   // --- Utility ---
   GenerateReport: {
     inputs: 1, outputs: 1,
-    html: `<div class="wf-node">${portRow('GenerateReport')}<p><strong>Generate Report</strong></p></div>`
+    html: `<div class="wf-node"><p><strong>Generate Report</strong></p>
+      ${portStrip('GenerateReport')}</div>`
   },
   FragmentedMP4Repackage: {
     inputs: 1, outputs: 1,
-    html: `<div class="wf-node">${portRow('FragmentedMP4Repackage')}<p><strong>fMP4 Repackage</strong></p></div>`
+    html: `<div class="wf-node"><p><strong>fMP4 Repackage</strong></p>
+      ${portStrip('FragmentedMP4Repackage')}</div>`
   },
 };
 
@@ -434,26 +453,20 @@ export function populateWorkflowDropdowns(workflows) {
   });
 }
 
-export function restoreSelectValues(dagJson) {
+// restoreSelectValues re-applies saved data-model values to all select elements after
+// populateResourceDropdowns has repopulated the options. Uses the editor's data model as
+// the source of truth; the dagJson argument is accepted but not required.
+export function restoreSelectValues(_dagJson) {
   if (!editor) return;
-  const nodes = dagJson?.nodes || {};
-  const drawflowData = editor.drawflow?.drawflow?.Home?.data || {};
-  for (const [origId, node] of Object.entries(nodes)) {
-    for (const [dfId, dfNode] of Object.entries(drawflowData)) {
-      if (dfNode.name === node.type) {
-        const el = document.querySelector(`#node-${dfId}`);
-        if (!el) continue;
-        const params = node.params || {};
-        let matched = false;
-        for (const [key, val] of Object.entries(params)) {
-          const input = el.querySelector(`[df-${key}]`);
-          if (input && val) {
-            input.value = val;
-            dfNode.data[key] = val;
-            matched = true;
-          }
-        }
-        if (matched) break;
+  const dfData = editor.drawflow?.drawflow?.Home?.data || {};
+  for (const [nodeId, dfNode] of Object.entries(dfData)) {
+    const el = document.querySelector(`#node-${nodeId}`);
+    if (!el) continue;
+    for (const [key, val] of Object.entries(dfNode.data || {})) {
+      if (!val || key.startsWith('_')) continue;
+      const input = el.querySelector(`[df-${key}]`);
+      if (input && input.tagName === 'SELECT') {
+        input.value = val;
       }
     }
   }
@@ -461,3 +474,11 @@ export function restoreSelectValues(dagJson) {
 
 export function getSessionColors() { return SESSION_COLORS; }
 export function getLocalNodeTypes() { return LOCAL_NODE_TYPES; }
+
+// zoomReset forces Drawflow to recalculate and repaint its canvas.
+// Call this after showing a previously-hidden panel that contains the editor.
+export function zoomReset() {
+  if (!editor) return;
+  editor.zoom_reset();
+  window.dispatchEvent(new Event('resize'));
+}
