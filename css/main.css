@@ -899,48 +899,32 @@ dialog input:focus, dialog textarea:focus {
   line-height: 1.4;
 }
 
-/* Port type strip — shown at bottom of each node, inputs left / outputs right */
-.wf-port-strip {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-top: 8px;
-  padding-top: 5px;
-  border-top: 1px solid rgba(255,255,255,0.07);
+/* Port dot labels — injected into Drawflow's .input/.output divs, float above the pad */
+.drawflow .inputs,
+.drawflow .outputs {
+  overflow: visible !important;
 }
-.wf-ps-in, .wf-ps-out {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.drawflow .input,
+.drawflow .output {
+  overflow: visible;
 }
-.wf-ps-out { align-items: flex-end; }
-.port-tag {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: #fff;
-  padding: 1px 5px;
-  border-radius: 3px;
+.port-dot-label {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
   background: var(--pc, #6B7280);
-  opacity: 0.9;
-  text-transform: uppercase;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
   pointer-events: none;
   user-select: none;
-  white-space: nowrap;
-}
-/* Named port labels (e.g. "① Reference video") shown inside 2-input nodes */
-.wf-in-ports {
-  background: rgba(255,255,255,0.04);
-  border-radius: 4px;
-  padding: 3px 6px;
-  margin-bottom: 6px;
-  border-left: 2px solid rgba(99,102,241,0.5);
-}
-.wf-in-lbl {
-  display: block;
-  font-size: 10px;
-  color: rgba(255,255,255,0.55);
-  line-height: 1.5;
+  z-index: 30;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
 /* Session group node borders (applied dynamically) */
