@@ -286,13 +286,19 @@ window.newWorkflow = function() {
 };
 
 window.saveWorkflow = async function() {
-  const name = prompt('Workflow name:');
-  if (!name) return;
+  const wfId = wfb.getWorkflowId();
+  let name = wfb.getWorkflowName();
+
+  if (!wfId) {
+    // New workflow — ask for a name.
+    name = prompt('Workflow name:');
+    if (!name) return;
+  }
+
   await refreshResourceDropdowns();
   const dag = wfb.exportDAG(name, projectId);
   if (!dag) return;
 
-  const wfId = wfb.getWorkflowId();
   const method = wfId ? 'PUT' : 'POST';
   const url = wfId
     ? `/v1/projects/${projectId}/workflows/${wfId}`
@@ -306,6 +312,7 @@ window.saveWorkflow = async function() {
   if (resp.ok) {
     const data = await resp.json();
     wfb.setWorkflowId(data.id);
+    wfb.setWorkflowName(data.name || name);
     loadWorkflowList();
     document.getElementById('job-progress').textContent = 'Workflow saved';
     setTimeout(loadSidebar, 1000);
@@ -336,6 +343,7 @@ window.loadSelectedWorkflow = async function(wfId) {
   if (!resp.ok) return;
   const wf = await resp.json();
   wfb.setWorkflowId(wf.id);
+  wfb.setWorkflowName(wf.name);
   if (wf.dag_json) wfb.importDAG(wf.dag_json);
   await refreshResourceDropdowns();
   wfb.restoreSelectValues();

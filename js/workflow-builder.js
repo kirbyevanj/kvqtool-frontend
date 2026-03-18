@@ -1,5 +1,6 @@
 let editor = null;
 let currentWorkflowId = null;
+let currentWorkflowName = null;
 let sessionGroupCounter = 0;
 
 const SESSION_COLORS = ['#22C55E', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
@@ -469,11 +470,14 @@ export function importDAG(dagJson) {
 export function clearEditor() {
   if (editor) editor.clear();
   currentWorkflowId = null;
+  currentWorkflowName = null;
   sessionGroupCounter = 0;
 }
 
 export function setWorkflowId(id) { currentWorkflowId = id; }
 export function getWorkflowId() { return currentWorkflowId; }
+export function setWorkflowName(name) { currentWorkflowName = name; }
+export function getWorkflowName() { return currentWorkflowName; }
 export function getNodeTypes() { return Object.keys(nodeTemplates); }
 
 export function populateResourceDropdowns(resources) {
