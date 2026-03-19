@@ -1,0 +1,51 @@
+{
+  "name": "kvqtool-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
+    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transform": {},
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 40,
+        "functions": 50,
+        "lines": 60,
+        "statements": 55
+      },
+      "./js/upload.js": {
+        "statements": 80,
+        "functions": 80,
+        "lines": 80
+      },
+      "./js/ws-progress.js": {
+        "statements": 80,
+        "functions": 80,
+        "lines": 80
+      },
+      "./js/media-backend.js": {
+        "statements": 80,
+        "functions": 80,
+        "lines": 80
+      }
+    },
+    "collectCoverageFrom": [
+      "js/**/*.js",
+      "!js/**/*.min.js"
+    ]
+  }
+}

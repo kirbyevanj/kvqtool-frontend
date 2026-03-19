@@ -19,9 +19,14 @@ export async function uploadToS3(projectId, file) {
 
   const { resource_id, upload_url } = await urlResp.json();
 
-  await uploadWithProgress(upload_url, file, (pct) => {
-    progressEl.textContent = `Uploading ${file.name}: ${pct}%`;
-  });
+  try {
+    await uploadWithProgress(upload_url, file, (pct) => {
+      progressEl.textContent = `Uploading ${file.name}: ${pct}%`;
+    });
+  } catch (err) {
+    progressEl.textContent = `Upload failed: ${err.message}`;
+    return;
+  }
 
   const confirmResp = await fetch(`/v1/projects/${projectId}/resources/${resource_id}/confirm-upload`, {
     method: 'POST',

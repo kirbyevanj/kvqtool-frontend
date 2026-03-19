@@ -10,12 +10,13 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow@0.0.60/dist/drawflow.min.css">
   <script src="https://cdn.jsdelivr.net/npm/drawflow@0.0.60/dist/drawflow.min.js"></script>
   <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 </head>
 <body>
   <header class="top-bar">
     <a href="/" class="logo">KVQTool-Web</a>
     <span id="project-name" class="project-title"></span>
-    <nav class="toolbar"><button class="btn" onclick="showView('player')">Player</button><button class="btn" onclick="toggleWorkflowPanel()">Workflows</button></nav>
+    <nav class="toolbar"><button class="btn" onclick="showView('player')">Player</button><button class="btn" onclick="toggleWorkflowPanel()">Workflows</button><button class="btn" onclick="showView('report')">Report</button></nav>
   </header>
 
   <div class="workspace">
@@ -149,8 +150,53 @@
         </div>
       </div>
 
+      <!-- ── Report / Metric Viewer Panel ────────────────────────────────── -->
+      <div id="panel-report" class="panel mrv-panel" style="display:none">
+        <!-- Mini video player (quarter-height, resizable) -->
+        <div class="mrv-player-area">
+          <div class="mrv-viewport" id="mrv-viewport" onclick="mrvViewportClick()">
+            <video id="mrv-video" class="vap-video" playsinline></video>
+            <canvas id="mrv-canvas" class="vap-canvas" style="display:none"></canvas>
+          </div>
+          <div id="mrv-resize" class="vap-resize-handle"></div>
+          <div id="mrv-controls" class="vap-controls">
+            <div class="vap-controls-row">
+              <button class="vap-btn" id="mrv-play-btn" onclick="mrvTogglePlay()">Play</button>
+              <input type="range" id="mrv-seekbar" class="vap-seekbar" min="0" max="1000" value="0" oninput="mrvSeek(this.value)">
+              <span id="mrv-timecode" class="vap-timecode">00:00:00:00</span>
+            </div>
+            <div class="vap-controls-row vap-controls-secondary">
+              <button class="vap-btn" onclick="mrvStepFrame(-1)">Prev</button>
+              <span id="mrv-frame-counter" class="vap-frame-counter">Frame: 0</span>
+              <button class="vap-btn" onclick="mrvStepFrame(1)">Next</button>
+              <span class="vap-separator"></span>
+              <button class="vap-btn" id="mrv-framestep-btn" onclick="mrvToggleFrameMode()">Frame Step</button>
+              <button class="vap-btn vap-collapse-btn" onclick="mrvToggleControls()">Hide</button>
+            </div>
+            <div class="vap-controls-row mrv-video-row">
+              <label class="mrv-video-label-text">Video:</label>
+              <select id="mrv-video-select" class="mrv-video-select" style="display:none" onchange="mrvLoadVideoById(this.value)">
+                <option value="">— No video —</option>
+              </select>
+              <span id="mrv-video-label" class="mrv-video-label">No video loaded</span>
+            </div>
+          </div>
+          <div class="vap-controls-nub" id="mrv-controls-nub" style="display:none" onclick="mrvToggleControls()"></div>
+        </div>
+
+        <!-- Legend -->
+        <div id="mrv-legend" class="mrv-legend">
+          <div id="mrv-legend-items">
+            <span class="mrv-legend-empty">No reports loaded. Double-click a 📊 report resource.</span>
+          </div>
+        </div>
+
+        <!-- ECharts container -->
+        <div id="mrv-chart" class="mrv-chart"></div>
+      </div>
+
       <div id="panel-empty" class="panel">
-        <p>Double-click a media resource to open the player.</p>
+        <p>Double-click a media resource to open the player, or a 📊 report to view metrics.</p>
       </div>
     </main>
   </div>

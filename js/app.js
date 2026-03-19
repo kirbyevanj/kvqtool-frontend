@@ -1,5 +1,6 @@
 import * as vap from './video-analysis-player.js';
 import * as wfb from './workflow-builder.js';
+import * as mrv from './metric-viewer.js';
 import { uploadToS3 } from './upload.js';
 import { connectJobWS } from './ws-progress.js';
 
@@ -25,9 +26,35 @@ window.vapViewportClick = (e) => {
   vap.viewportClick();
 };
 
+// Metric viewer window bindings
+window.mrvTogglePlay = () => mrv.playerTogglePlay();
+window.mrvSeek = (val) => mrv.playerSeek(val);
+window.mrvStepFrame = (dir) => mrv.playerStepFrame(dir);
+window.mrvToggleFrameMode = () => mrv.playerToggleFrameMode();
+window.mrvToggleControls = () => mrv.playerToggleControls();
+window.mrvViewportClick = () => mrv.playerTogglePlay();
+window.mrvRemoveReport = (id) => mrv.removeReport(id);
+window.mrvLoadVideoById = (id) => { if (id) mrv.playerLoadResource(id); };
+
 window.onResourceClick = function(id, type) {
   document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
-  if (type !== 'media') return;
+
+  if (type === 'report') {
+    window.viewReport(id);
+    return;
+  }
+
+  if (type !== 'media') {
+    // For generic file resources, try opening .json files as metric reports
+    if (type === 'file') {
+      const row = document.querySelector(`.resource-item[data-id="${id}"]`);
+      const label = row?.querySelector('.res-label')?.textContent?.trim() || '';
+      if (label.toLowerCase().endsWith('.json')) {
+        window.viewReport(id);
+      }
+    }
+    return;
+  }
 
   const row = document.querySelector(`.resource-item[data-id="${id}"]`);
   const label = row?.querySelector('.res-label')?.textContent?.trim() || '';
@@ -41,6 +68,14 @@ window.onResourceClick = function(id, type) {
     vap.loadMedia(id, projectId);
     showView("player", true);
   }
+};
+
+window.viewReport = async function(id) {
+  document.querySelectorAll('.res-menu').forEach(m => m.style.display = 'none');
+  const row = document.querySelector(`.resource-item[data-id="${id}"]`);
+  const label = row?.querySelector('.res-label')?.textContent?.trim() || 'Report';
+  showView('report', true);
+  await mrv.loadReport(id, label);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -97,10 +132,12 @@ window.showView = showView;
 function showView(view, force) {
   const player = document.getElementById('video-analysis-player');
   const workflow = document.getElementById('panel-workflow');
+  const report = document.getElementById('panel-report');
   const empty = document.getElementById('panel-empty');
 
   player.style.display = 'none';
   workflow.style.display = 'none';
+  if (report) report.style.display = 'none';
   empty.style.display = 'none';
 
   switch (view) {
@@ -114,6 +151,9 @@ function showView(view, force) {
       break;
     case 'workflow':
       workflow.style.display = 'flex';
+      break;
+    case 'report':
+      if (report) report.style.display = 'flex';
       break;
     default:
       empty.style.display = 'block';
@@ -487,6 +527,7 @@ function init() {
     setInterval(loadSidebar, 60000);
   initPoolDropZone();
   vap.init(projectId);
+  mrv.init(projectId);
   initResizeHandle();
   document.getElementById('add-resource-btn')?.addEventListener('click', () => {
     const dd = document.getElementById('add-dropdown');
